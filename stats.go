@@ -1,32 +1,47 @@
 package main
 
 import (
-	"fmt"
+	"math"
 	"sort"
 	"strconv"
 )
 
-func calcMean(nums []int) float64 {
-	var total int
+func calcMean(nums []float64) float64 {
+	var total float64
 	length := len(nums)
 	for _, item := range nums {
 		total += item
 	}
-	mean := float64(total) / float64(length)
+	mean := total / float64(length)
 	return mean
 }
 
-func calcMedian(nums []int) float64 {
-	sort.Ints(nums)
+func calcMedian(nums []float64) float64 {
+	sort.Float64s(nums)
 
 	isEven := len(nums)%2 == 0
 	mNumber := len(nums) / 2
 
 	if !isEven {
-		fmt.Println("is odd")
-		return float64(nums[mNumber])
+		return nums[mNumber]
 	}
 	return (float64(nums[mNumber-1]) + float64(nums[mNumber])) / 2
+}
+
+func calcVarience(nums []float64) float64 {
+	var variance float64
+	mean := calcMean(nums)
+
+	for index, _ := range nums {
+		variance += math.Pow(nums[index]-mean, 2)
+	}
+
+	return variance / float64(len(nums))
+}
+
+func calcStdDev(nums []float64) float64 {
+	variance := calcVarience(nums)
+	return math.Sqrt(variance)
 }
 
 func return95Median(nums []int) string {
