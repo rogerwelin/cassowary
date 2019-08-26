@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 )
@@ -12,22 +13,20 @@ func calcMean(nums []int) float64 {
 		total += item
 	}
 	mean := float64(total) / float64(length)
-	//return strconv.FormatFloat(mean, 'f', 2, 64)
 	return mean
 }
 
-func calcMedian(nums []int) string {
+func calcMedian(nums []int) float64 {
 	sort.Ints(nums)
 
-	even := len(nums)%2 == 0
+	isEven := len(nums)%2 == 0
+	mNumber := len(nums) / 2
 
-	if !even {
-		firstMiddleMost := (len(nums) - 1) / 2
-		secondMiddleMost := (len(nums)-1)/2 + 1
-		median := (firstMiddleMost + secondMiddleMost) / 2
-		return strconv.Itoa(nums[median])
+	if !isEven {
+		fmt.Println("is odd")
+		return float64(nums[mNumber])
 	}
-	return strconv.Itoa(nums[(len(nums)-1)/2])
+	return (float64(nums[mNumber-1]) + float64(nums[mNumber])) / 2
 }
 
 func return95Median(nums []int) string {
