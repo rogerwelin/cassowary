@@ -5,14 +5,15 @@ import (
 	"strconv"
 )
 
-func calcMean(nums []int) string {
+func calcMean(nums []int) float64 {
 	var total int
 	length := len(nums)
 	for _, item := range nums {
 		total += item
 	}
 	mean := float64(total) / float64(length)
-	return strconv.FormatFloat(mean, 'f', 2, 64)
+	//return strconv.FormatFloat(mean, 'f', 2, 64)
+	return mean
 }
 
 func calcMedian(nums []int) string {
