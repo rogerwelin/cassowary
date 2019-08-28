@@ -6,13 +6,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Cassowary struct {
+type cassowary struct {
 	inputFile        os.File
 	baseURL          string
 	concurrencyLevel int
 	requests         int
 	promExport       bool
-	promUrl          string
+	promURL          string
 }
 
 func validateRun(c *cli.Context) {

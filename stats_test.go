@@ -18,28 +18,28 @@ var testNums = []struct {
 }
 
 func TestCalcMean(t *testing.T) {
-	for _, tt := range testNums {
+	for i, tt := range testNums {
 		actual := calcMean(tt.in)
 		if actual != tt.expectedMean {
-			t.Errorf("calcMean(%f): expected %f, actual %f", tt.in, tt.expectedMean, actual)
+			t.Errorf("test: %d, calcMean(%f): expected %f, actual %f", i+1, tt.in, tt.expectedMean, actual)
 		}
 	}
 }
 
 func TestCalcMedian(t *testing.T) {
-	for _, tt := range testNums {
+	for i, tt := range testNums {
 		actual := calcMedian(tt.in)
 		if actual != tt.expectedMedian {
-			t.Errorf("calcMean(%f): expected %f, actual %f", tt.in, tt.expectedMedian, actual)
+			t.Errorf("test: %d, calcMean(%f): expected %f, actual %f", i+1, tt.in, tt.expectedMedian, actual)
 		}
 	}
 }
 
 func TestCalcStdDev(t *testing.T) {
-	for _, tt := range testNums {
+	for i, tt := range testNums {
 		actual := calcStdDev(tt.in)
 		if actual != tt.expectedStdDev {
-			t.Errorf("calcMean(%f): expected %f, actual %f", tt.in, tt.expectedStdDev, actual)
+			t.Errorf("test: %d, calcMean(%f): expected %f, actual %f", i+1, tt.in, tt.expectedStdDev, actual)
 		}
 	}
 }
