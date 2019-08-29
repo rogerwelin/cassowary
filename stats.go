@@ -32,7 +32,7 @@ func calcVarience(nums []float64) float64 {
 	var variance float64
 	mean := calcMean(nums)
 
-	for index, _ := range nums {
+	for index := range nums {
 		variance += math.Pow(nums[index]-mean, 2)
 	}
 
