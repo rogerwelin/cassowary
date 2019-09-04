@@ -30,10 +30,31 @@ type cassowary struct {
 	promURL          string
 }
 
-func validateRun(c *cli.Context) {
+func validateRun(c *cli.Context) error {
+	if baseURL == "" {
+		return errURLRequired
+	}
+	if noOfRequests == 0 {
+		return errRequestsRequired
+	}
+	if concurrencyLevel == 0 {
+		concurrencyLevel = 1
+	}
+
+	return nil
 }
 
-func validateRunFile(c *cli.Context) {
+func validateRunFile(c *cli.Context) error {
+	if baseURL == "" {
+		return errBaseURLRequired
+	}
+	if filePath == "" {
+		return errFileRequired
+	}
+	if concurrencyLevel == 0 {
+		concurrencyLevel = 1
+	}
+	return nil
 }
 
 func main() {
