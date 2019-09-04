@@ -12,7 +12,7 @@ var (
 	errBaseURLRequired  = errors.New("-u, --base-url argument is required")
 	errFileRequired     = errors.New("-f, --file argument is required required")
 	errURLRequired      = errors.New("-u, --url argument is required")
-	errRequestsRequired = errors.New("-r, --requests argument is required")
+	errRequestsRequired = errors.New("-n, --requests argument is required")
 
 	baseURL          string
 	filePath         string
@@ -37,7 +37,7 @@ func validateRunFile(c *cli.Context) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "cassowary"
+	app.Name = "cassowary - 食火鸡"
 	app.HelpName = "cassowary"
 	app.UsageText = "cassowary [command] [command options] [arguments...]"
 	app.EnableBashCompletion = true
@@ -80,8 +80,8 @@ func main() {
 					Destination: &concurrencyLevel,
 				},
 				cli.IntFlag{
-					Name:        "r, requests",
-					Usage:       "number of requests",
+					Name:        "n, requests",
+					Usage:       "number of requests to perform",
 					Destination: &noOfRequests,
 				},
 			},
