@@ -18,6 +18,7 @@ var (
 	filePath         string
 	concurrencyLevel int
 	noOfRequests     int
+	promExport       bool
 	promGwURL        string
 )
 
@@ -40,6 +41,20 @@ func validateRun(c *cli.Context) error {
 	if concurrencyLevel == 0 {
 		concurrencyLevel = 1
 	}
+	if promGwURL == "" {
+		promExport = false
+	} else {
+		promExport = true
+		promGwURL = promGwURL
+	}
+
+	cass := &cassowary{
+		baseURL:          baseURL,
+		concurrencyLevel: concurrencyLevel,
+		requests:         noOfRequests,
+		promExport:       promExport,
+		promURL:          promGwURL,
+	}
 
 	return nil
 }
@@ -53,6 +68,12 @@ func validateRunFile(c *cli.Context) error {
 	}
 	if concurrencyLevel == 0 {
 		concurrencyLevel = 1
+	}
+	if promGwURL == "" {
+		promExport = false
+	} else {
+		promExport = true
+		promGwURL = promGwURL
 	}
 	return nil
 }
@@ -81,7 +102,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:        "f, file",
-					Usage:       "specify `FILE` path, local or www, containing the url suffixes (absolute paths)",
+					Usage:       "specify `FILE` path, local or www, containing the url suffixes",
 					Destination: &filePath,
 				},
 				cli.StringFlag{
