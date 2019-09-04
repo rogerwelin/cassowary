@@ -18,6 +18,7 @@ var (
 	filePath         string
 	concurrencyLevel int
 	noOfRequests     int
+	promGwURL        string
 )
 
 type cassowary struct {
@@ -62,6 +63,11 @@ func main() {
 					Usage:       "specify `FILE` path, local or www, containing the url suffixes (absolute paths)",
 					Destination: &filePath,
 				},
+				cli.StringFlag{
+					Name:        "p, prompushgwurl",
+					Usage:       "specify prometheus push gateway url to send metrics (optional)",
+					Destination: &promGwURL,
+				},
 			},
 			Action: validateRunFile,
 		},
@@ -83,6 +89,11 @@ func main() {
 					Name:        "n, requests",
 					Usage:       "number of requests to perform",
 					Destination: &noOfRequests,
+				},
+				cli.StringFlag{
+					Name:        "p, prompushgwurl",
+					Usage:       "specify prometheus push gateway url to send metrics (optional)",
+					Destination: &promGwURL,
 				},
 			},
 			Action: validateRun,
