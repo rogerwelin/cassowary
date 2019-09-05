@@ -23,6 +23,7 @@ var (
 )
 
 type cassowary struct {
+	fileMode         bool
 	inputFile        string
 	baseURL          string
 	concurrencyLevel int
@@ -45,16 +46,18 @@ func validateRun(c *cli.Context) error {
 		promExport = false
 	} else {
 		promExport = true
-		promGwURL = promGwURL
 	}
 
 	cass := &cassowary{
+		fileMode:         false,
 		baseURL:          baseURL,
 		concurrencyLevel: concurrencyLevel,
 		requests:         noOfRequests,
 		promExport:       promExport,
 		promURL:          promGwURL,
 	}
+
+	cass.coordinate()
 
 	return nil
 }
@@ -73,14 +76,25 @@ func validateRunFile(c *cli.Context) error {
 		promExport = false
 	} else {
 		promExport = true
-		promGwURL = promGwURL
 	}
+
+	cass := &cassowary{
+		fileMode:         true,
+		baseURL:          baseURL,
+		concurrencyLevel: concurrencyLevel,
+		requests:         noOfRequests,
+		promExport:       promExport,
+		promURL:          promGwURL,
+	}
+
+	cass.coordinate()
+
 	return nil
 }
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "cassowary - 食火鸡"
+	app.Name = "cassowary - 鹤鸵"
 	app.HelpName = "cassowary"
 	app.UsageText = "cassowary [command] [command options] [arguments...]"
 	app.EnableBashCompletion = true
