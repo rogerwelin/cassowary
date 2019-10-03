@@ -1,38 +1,45 @@
 package main
 
-const (
-	summaryTable = `` + "\n\n" +
-		` DNS Lookup......................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` TCP Connect.....................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` Server Processing...............: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` Content Transfer................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		`` + "\n" +
-		`Summary: ` + "\n" +
-		` Total Req.......................: %s` + "\n" +
-		` Failed Req......................: %s` + "\n" +
-		` Req/s...........................: %s` + "\n\n"
+import (
+	"fmt"
+	"net/http"
+	"time"
 
-	summaryTLSTable = `` + "\n\n" +
-		` DNS Lookup......................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` TCP Connect.....................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` TLS Handshake...................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` Server Processing...............: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		` Content Transfer................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
-		`` + "\n" +
-		`Summary: ` + "\n" +
-		` Total Req.......................: %s` + "\n" +
-		` Failed Req......................: %s` + "\n" +
-		` Req/s...........................: %s` + "\n\n"
+	"github.com/fatih/color"
 )
+
+var client = &http.Client{
+	Timeout: time.Second * 5,
+	Transport: &http.Transport{
+		MaxIdleConns:        300,
+		MaxIdleConnsPerHost: 300,
+		MaxConnsPerHost:     300,
+	},
+}
+
+func runLoadTest(client *http.Client, baseURL string) {
+
+}
 
 func (c *cassowary) coordinate() error {
 
+	color := color.New(color.FgCyan).Add(color.Underline)
+	fmt.Println()
+	color.Printf("Starting Load Test with %d concurrent users\n\n", c.concurrencyLevel)
+
+	var urlSuffixes []string
+	var err error
+
 	if c.fileMode {
-		urlSuffixes, err := readFile(c.inputFile)
+		urlSuffixes, err = readFile(c.inputFile)
 		if err != nil {
 			return err
 		}
+		c.requests = len(urlSuffixes)
+		fmt.Println(urlSuffixes)
 	}
+
+	fmt.Println(c.requests)
 
 	return nil
 }
