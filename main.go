@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/schollz/progressbar"
 	"github.com/urfave/cli"
 )
 
@@ -30,6 +32,8 @@ type cassowary struct {
 	requests         int
 	promExport       bool
 	promURL          string
+	client           *http.Client
+	bar              *progressbar.ProgressBar
 }
 
 func validateRun(c *cli.Context) error {
