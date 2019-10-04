@@ -23,7 +23,7 @@ type durationMetrics struct {
 	URL              string
 }
 
-func (c *cassowary) runLoadTest(cmdOutputChan chan<- durationMetrics, workerChan chan string) {
+func (c *cassowary) runLoadTest(outputChan chan<- durationMetrics, workerChan chan string) {
 	for _ = range workerChan {
 		tt := newTransport(c.client.Transport)
 		c.client.Transport = tt
@@ -60,15 +60,18 @@ func (c *cassowary) runLoadTest(cmdOutputChan chan<- durationMetrics, workerChan
 		// Body fully read here
 		tt.current.end = time.Now()
 		for _, trace := range tt.traces {
+			out := durationMetrics{}
 			if trace.tls {
 				fmt.Println("Connect: ", trace.connectDone.Sub(trace.dnsDone).Seconds())
 				fmt.Println("tls: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
+				out.TCPConn = trace.connectDone.Sub(trace.dnsDone).Seconds()
+				out.TLSHandshake = trace.gotConn.Sub(trace.dnsDone).Seconds()
 			} else {
 				fmt.Println("connect: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
+				out.TCPConn = trace.gotConn.Sub(trace.dnsDone).Seconds()
 			}
-
+			outPutChan <- out
 		}
-
 	}
 }
 
