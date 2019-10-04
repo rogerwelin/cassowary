@@ -22,6 +22,7 @@ var (
 	noOfRequests     int
 	promExport       bool
 	promGwURL        string
+	httpHeader       string
 )
 
 type cassowary struct {
@@ -128,6 +129,11 @@ func main() {
 					Usage:       "specify prometheus push gateway url to send metrics (optional)",
 					Destination: &promGwURL,
 				},
+				cli.StringFlag{
+					Name:        "h, header",
+					Usage:       "Add Arbitrary header line, eg. 'Host: www.example.com'",
+					Destination: &httpHeader,
+				},
 			},
 			Action: validateRunFile,
 		},
@@ -154,6 +160,11 @@ func main() {
 					Name:        "p, prompushgwurl",
 					Usage:       "specify prometheus push gateway url to send metrics (optional)",
 					Destination: &promGwURL,
+				},
+				cli.StringFlag{
+					Name:        "h, header",
+					Usage:       "Add Arbitrary header line, eg. 'Host: www.example.com'",
+					Destination: &httpHeader,
 				},
 			},
 			Action: validateRun,
