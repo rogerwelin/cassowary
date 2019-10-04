@@ -44,7 +44,7 @@ func calcStdDev(nums []float64) float64 {
 	return math.Sqrt(variance)
 }
 
-func return95Median(nums []int) string {
+func return95Percentile(nums []int) string {
 	sort.Ints(nums)
 	nineFive := float64(len(nums)-1) * 0.95
 

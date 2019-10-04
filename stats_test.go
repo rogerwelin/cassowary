@@ -23,6 +23,17 @@ var testStatusCodes = []struct {
 	expectedNon200 string
 }{
 	{[]int{200, 200, 404, 504, 200, 404, 504}, "4"},
+	{[]int{200, 404, 404, 504, 500}, "4"},
+	{[]int{405, 401, 401, 200, 408, 502, 502, 200}, "6"},
+}
+
+var testPercentile = []struct {
+	in         []int
+	expected95 string
+}{
+	{[]int{1, 2, 3, 4, 5, 6, 7, 8, 9}, "8"},
+	{[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 1, 2, 3, 4, 5, 101, 44, 33, 22}, "44"},
+	{[]int{101, 202, 200, 100, 150, 144, 532, 874}, "532"},
 }
 
 func TestCalcMean(t *testing.T) {
@@ -57,6 +68,15 @@ func TestCalcStdDev(t *testing.T) {
 		actual := calcStdDev(tt.in)
 		if actual != tt.expectedStdDev {
 			t.Errorf("test: %d, calcStdDev(%f): expected %f, actual %f", i+1, tt.in, tt.expectedStdDev, actual)
+		}
+	}
+}
+
+func Test95Percentile(t *testing.T) {
+	for i, tt := range testPercentile {
+		actual := return95Percentile(tt.in)
+		if actual != tt.expected95 {
+			t.Errorf("test: %d, return95Percentile(%d): expected %s, actual %s", i+1, tt.in, tt.expected95, actual)
 		}
 	}
 }
