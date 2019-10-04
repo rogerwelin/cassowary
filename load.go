@@ -21,7 +21,9 @@ type durationMetrics struct {
 }
 
 func (c *cassowary) runLoadTest(cmdOutputChan chan<- durationMetrics, workerChan chan string) {
+	for item := range workerChan {
 
+	}
 }
 
 func (c *cassowary) coordinate() error {
