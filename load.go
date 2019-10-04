@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptrace"
 	"sync"
 	"time"
 
@@ -21,7 +24,50 @@ type durationMetrics struct {
 }
 
 func (c *cassowary) runLoadTest(cmdOutputChan chan<- durationMetrics, workerChan chan string) {
-	for item := range workerChan {
+	for _ = range workerChan {
+		tt := newTransport(c.client.Transport)
+		c.client.Transport = tt
+
+		request, err := http.NewRequest("GET", c.baseURL, nil)
+		if err != nil {
+			panic(err)
+		}
+
+		trace := &httptrace.ClientTrace{
+			DNSStart:             tt.DNSStart,
+			DNSDone:              tt.DNSDone,
+			ConnectStart:         tt.ConnectStart,
+			ConnectDone:          tt.ConnectDone,
+			GotConn:              tt.GotConn,
+			GotFirstResponseByte: tt.GotFirstResponseByte,
+		}
+
+		request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
+		resp, err := c.client.Do(request)
+		if err != nil {
+			panic(err)
+		}
+
+		if resp != nil {
+			_, err = io.Copy(ioutil.Discard, resp.Body)
+			if err != nil {
+				fmt.Println("Failed to read HTTP response body", err)
+			}
+			resp.Body.Close()
+			c.bar.Add(1)
+		}
+
+		// Body fully read here
+		tt.current.end = time.Now()
+		for _, trace := range tt.traces {
+			if trace.tls {
+				fmt.Println("Connect: ", trace.connectDone.Sub(trace.dnsDone).Seconds())
+				fmt.Println("tls: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
+			} else {
+				fmt.Println("connect: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
+			}
+
+		}
 
 	}
 }
@@ -52,12 +98,34 @@ func (c *cassowary) coordinate() error {
 			return err
 		}
 		c.requests = len(urlSuffixes)
-		fmt.Println(urlSuffixes)
 	}
 
 	var wg sync.WaitGroup
 	channel := make(chan durationMetrics, c.requests)
 	workerChan := make(chan string)
+
+	wg.Add(c.concurrencyLevel)
+	start := time.Now()
+
+	for i := 0; i < c.concurrencyLevel; i++ {
+		go func() {
+			c.runLoadTest(channel, workerChan)
+			wg.Done()
+		}()
+	}
+
+	if c.fileMode {
+		for _, line := range urlSuffixes {
+			workerChan <- line
+		}
+	}
+
+	close(workerChan)
+	wg.Wait()
+	close(channel)
+
+	end := time.Since(start)
+	fmt.Println(end)
 
 	return nil
 }
