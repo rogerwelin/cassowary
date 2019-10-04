@@ -51,3 +51,14 @@ func return95Median(nums []int) string {
 	newSlice := nums[int(nineFive):]
 	return strconv.Itoa(newSlice[0])
 }
+
+func failedRequests(slice []int) string {
+	non200 := 0
+
+	for _, item := range slice {
+		if item > 226 {
+			non200++
+		}
+	}
+	return strconv.Itoa(non200)
+}
