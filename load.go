@@ -74,11 +74,16 @@ func (c *cassowary) runLoadTest(cmdOutputChan chan<- durationMetrics, workerChan
 
 func (c *cassowary) coordinate() error {
 
+	tls, err := isTLS(c.baseURL)
+	if err != nil {
+		return err
+	}
+	c.isTLS = tls
+
 	color := color.New(color.FgCyan).Add(color.Underline)
 	color.Printf("\nStarting Load Test with %d concurrent users\n\n", c.concurrencyLevel)
 
 	var urlSuffixes []string
-	var err error
 
 	c.client = &http.Client{
 		Timeout: time.Second * 5,

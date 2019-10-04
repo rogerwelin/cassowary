@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptrace"
+	"net/url"
 	"time"
 )
 
@@ -69,4 +70,19 @@ func (t *transport) GotConn(_ httptrace.GotConnInfo) {
 
 func (t *transport) GotFirstResponseByte() {
 	t.current.responseStart = time.Now()
+}
+
+// Determine if tls
+func isTLS(baseURL string) (bool, error) {
+	scheme, err := url.Parse(baseURL)
+
+	if err != nil {
+		return false, err
+	}
+
+	if scheme.String() == "http" {
+		return false, nil
+	}
+
+	return true, nil
 }

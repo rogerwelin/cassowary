@@ -27,6 +27,7 @@ var (
 
 type cassowary struct {
 	fileMode         bool
+	isTLS            bool
 	inputFile        string
 	baseURL          string
 	concurrencyLevel int
