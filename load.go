@@ -14,7 +14,7 @@ import (
 )
 
 type durationMetrics struct {
-	DnsLookup        int
+	DNSLookup        int
 	TCPConn          int
 	TLSHandshake     int
 	ServerProcessing int
@@ -61,15 +61,20 @@ func (c *cassowary) runLoadTest(outputChan chan<- durationMetrics, workerChan ch
 		tt.current.end = time.Now()
 		for _, trace := range tt.traces {
 			out := durationMetrics{}
+
 			if trace.tls {
-				fmt.Println("Connect: ", trace.connectDone.Sub(trace.dnsDone).Seconds())
-				fmt.Println("tls: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
+				out.DNSLookup = trace.dnsDone.Sub(trace.start).Seconds()
 				out.TCPConn = trace.connectDone.Sub(trace.dnsDone).Seconds()
 				out.TLSHandshake = trace.gotConn.Sub(trace.dnsDone).Seconds()
-			} else {
-				fmt.Println("connect: ", trace.gotConn.Sub(trace.dnsDone).Seconds())
-				out.TCPConn = trace.gotConn.Sub(trace.dnsDone).Seconds()
+				out.ServerProcessing = trace.responseStart.Sub(trace.gotConn).Seconds()
+				out.ContentTransfer = trace.end.Sub(trace.responseStart).Seconds()
 			}
+
+			out.DNSLookup = trace.dnsDone.Sub(trace.start).Seconds()
+			out.TCPConn = trace.gotConn.Sub(trace.dnsDone).Seconds()
+			out.ServerProcessing = trace.responseStart.Sub(trace.gotConn).Seconds()
+			out.ContentTransfer = trace.end.Sub(trace.responseStart).Seconds()
+
 			outPutChan <- out
 		}
 	}
