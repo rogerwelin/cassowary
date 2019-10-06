@@ -14,16 +14,16 @@ import (
 )
 
 type durationMetrics struct {
-	DNSLookup        int
-	TCPConn          int
-	TLSHandshake     int
-	ServerProcessing int
-	ContentTransfer  int
+	DNSLookup        float64
+	TCPConn          float64
+	TLSHandshake     float64
+	ServerProcessing float64
+	ContentTransfer  float64
 	StatusCode       int
 	URL              string
 }
 
-func (c *cassowary) runLoadTest(outputChan chan<- durationMetrics, workerChan chan string) {
+func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
 	for _ = range workerChan {
 		tt := newTransport(c.client.Transport)
 		c.client.Transport = tt
