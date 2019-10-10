@@ -131,7 +131,7 @@ func runCLI(args []string) {
 					Destination: &promGwURL,
 				},
 				cli.StringFlag{
-					Name:        "h, header",
+					Name:        "H, header",
 					Usage:       "Add Arbitrary header line, eg. 'Host: www.example.com'",
 					Destination: &httpHeader,
 				},
@@ -163,7 +163,7 @@ func runCLI(args []string) {
 					Destination: &promGwURL,
 				},
 				cli.StringFlag{
-					Name:        "h, header",
+					Name:        "H, header",
 					Usage:       "Add Arbitrary header line, eg. 'Host: www.example.com'",
 					Destination: &httpHeader,
 				},
@@ -180,7 +180,7 @@ func runCLI(args []string) {
 		}
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(args)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
