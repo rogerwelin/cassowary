@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -50,6 +51,7 @@ func readFile(filePath string) ([]string, error) {
 		}
 	}
 
+	fmt.Println(filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err

@@ -24,9 +24,11 @@ type durationMetrics struct {
 }
 
 func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
-	for _ = range workerChan {
+	for item := range workerChan {
 		tt := newTransport(c.client.Transport)
 		c.client.Transport = tt
+		fmt.Println(item)
+		fmt.Println(c)
 
 		request, err := http.NewRequest("GET", c.baseURL, nil)
 		if err != nil {
@@ -54,8 +56,8 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 				fmt.Println("Failed to read HTTP response body", err)
 			}
 			resp.Body.Close()
-			c.bar.Add(1)
 		}
+		c.bar.Add(1)
 
 		// Body fully read here
 		tt.current.end = time.Now()
@@ -109,12 +111,19 @@ func (c *cassowary) coordinate() error {
 	c.bar = progressbar.New(c.requests)
 
 	if c.fileMode {
+		fmt.Println("got here")
+		fmt.Println(c.inputFile)
+		fmt.Println("got here")
 		urlSuffixes, err = readFile(c.inputFile)
 		if err != nil {
+			panic(err)
 			return err
 		}
 		c.requests = len(urlSuffixes)
+		fmt.Println(urlSuffixes)
 	}
+	fmt.Println("apa")
+	fmt.Println(c)
 
 	var wg sync.WaitGroup
 	channel := make(chan durationMetrics, c.requests)

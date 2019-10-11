@@ -86,6 +86,7 @@ func validateRunFile(c *cli.Context) error {
 
 	cass := &cassowary{
 		fileMode:         true,
+		inputFile:        filePath,
 		baseURL:          baseURL,
 		concurrencyLevel: concurrencyLevel,
 		requests:         noOfRequests,
