@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/fatih/color"
+)
+
 const (
 	summaryTable = `` + "\n\n" +
 		` DNS Lookup......................: Avg/mean=%sms ` + "\t" + `Median=%sms ` + "\t" + `p(95)=%sms` + "\n" +
@@ -24,3 +30,7 @@ const (
 		` Failed Req......................: %s` + "\n" +
 		` Req/s...........................: %s` + "\n\n"
 )
+
+func printf(format string, a ...interface{}) {
+	fmt.Fprintf(color.Output, format, a...)
+}

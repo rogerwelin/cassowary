@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
+	"strconv"
 	"sync"
 	"time"
 
@@ -90,8 +91,8 @@ func (c *cassowary) coordinate() error {
 	}
 	c.isTLS = tls
 
-	color := color.New(color.FgCyan).Add(color.Underline)
-	color.Printf("\nStarting Load Test with %d concurrent users\n\n", c.concurrencyLevel)
+	col := color.New(color.FgCyan).Add(color.Underline)
+	col.Printf("\nStarting Load Test with %d concurrent users\n\n", c.concurrencyLevel)
 
 	var urlSuffixes []string
 
@@ -166,10 +167,14 @@ func (c *cassowary) coordinate() error {
 	tcp95 := calc95Percentile(tcpDur)
 
 	// TLS
+	var tlsMean float64
+	var tlsMedian float64
+	var tls95 string
+
 	if c.isTLS {
-		tlsMean := calcMean(tlsDur)
-		tlsMedian := calcMedian(tlsDur)
-		tls95 := calc95Percentile(tlsDur)
+		tlsMean = calcMean(tlsDur)
+		tlsMedian = calcMedian(tlsDur)
+		tls95 = calc95Percentile(tlsDur)
 	}
 
 	// Server Processing
@@ -182,5 +187,52 @@ func (c *cassowary) coordinate() error {
 	transferMedian := calcMedian(transferDur)
 	transfer95 := calc95Percentile(transferDur)
 
+	// Request per second
+	reqS := requestsPerSecond(c.requests, end)
+
+	// Failed Requests
+	failedR := failedRequests(statusCodes)
+
+	if c.isTLS {
+		printf(summaryTLSTable,
+			color.CyanString(fmt.Sprintf("%f", dnsMean)),
+			color.CyanString(fmt.Sprintf("%f", dnsMedian)),
+			color.CyanString(dns95),
+			color.CyanString(fmt.Sprintf("%f", tcpMean)),
+			color.CyanString(fmt.Sprintf("%f", tcpMedian)),
+			color.CyanString(tcp95),
+			color.CyanString(fmt.Sprintf("%f", tlsMean)),
+			color.CyanString(fmt.Sprintf("%f", tlsMedian)),
+			color.CyanString(tls95),
+			color.CyanString(fmt.Sprintf("%f", serverMean)),
+			color.CyanString(fmt.Sprintf("%f", serverMedian)),
+			color.CyanString(server95),
+			color.CyanString(fmt.Sprintf("%f", transferMean)),
+			color.CyanString(fmt.Sprintf("%f", transferMedian)),
+			color.CyanString(transfer95),
+			color.CyanString(strconv.Itoa(c.requests)),
+			color.CyanString(failedR),
+			color.CyanString(reqS),
+		)
+		return nil
+	}
+
+	printf(summaryTable,
+		color.CyanString(fmt.Sprintf("%f", dnsMean)),
+		color.CyanString(fmt.Sprintf("%f", dnsMedian)),
+		color.CyanString(dns95),
+		color.CyanString(fmt.Sprintf("%f", tcpMean)),
+		color.CyanString(fmt.Sprintf("%f", tcpMedian)),
+		color.CyanString(tcp95),
+		color.CyanString(fmt.Sprintf("%f", serverMean)),
+		color.CyanString(fmt.Sprintf("%f", serverMedian)),
+		color.CyanString(server95),
+		color.CyanString(fmt.Sprintf("%f", transferMean)),
+		color.CyanString(fmt.Sprintf("%f", transferMedian)),
+		color.CyanString(transfer95),
+		color.CyanString(strconv.Itoa(c.requests)),
+		color.CyanString(failedR),
+		color.CyanString(reqS),
+	)
 	return nil
 }

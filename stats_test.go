@@ -76,7 +76,7 @@ func Test95Percentile(t *testing.T) {
 	for i, tt := range testPercentile {
 		actual := calc95Percentile(tt.in)
 		if actual != tt.expected95 {
-			t.Errorf("test: %d, return95Percentile(%d): expected %s, actual %s", i+1, tt.in, tt.expected95, actual)
+			t.Errorf("test: %d, return95Percentile(%f): expected %s, actual %s", i+1, tt.in, tt.expected95, actual)
 		}
 	}
 }

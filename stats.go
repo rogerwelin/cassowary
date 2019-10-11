@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func calcMean(nums []float64) float64 {
@@ -51,7 +51,12 @@ func calc95Percentile(nums []float64) string {
 
 	newSlice := nums[int(nineFive):]
 	//return strconv.Itoa(newSlice[0])
-	return fmt.Sprintf("%f", newSlice[0])
+	return strconv.FormatFloat(newSlice[0], 'f', 0, 64)
+}
+
+func requestsPerSecond(request int, duration time.Duration) string {
+	convertedDuration := float64(duration) / float64(time.Second)
+	return strconv.FormatFloat(float64(request)/convertedDuration, 'f', 6, 64)
 }
 
 func failedRequests(slice []int) string {
