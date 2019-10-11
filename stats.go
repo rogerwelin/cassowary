@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -44,12 +45,13 @@ func calcStdDev(nums []float64) float64 {
 	return math.Sqrt(variance)
 }
 
-func return95Percentile(nums []int) string {
-	sort.Ints(nums)
+func calc95Percentile(nums []float64) string {
+	sort.Float64s(nums)
 	nineFive := float64(len(nums)-1) * 0.95
 
 	newSlice := nums[int(nineFive):]
-	return strconv.Itoa(newSlice[0])
+	//return strconv.Itoa(newSlice[0])
+	return fmt.Sprintf("%f", newSlice[0])
 }
 
 func failedRequests(slice []int) string {

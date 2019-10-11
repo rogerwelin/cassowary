@@ -20,7 +20,6 @@ type durationMetrics struct {
 	ServerProcessing float64
 	ContentTransfer  float64
 	StatusCode       int
-	URL              string
 }
 
 func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
@@ -62,18 +61,15 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		for _, trace := range tt.traces {
 			out := durationMetrics{}
 
-			if trace.tls {
-				out.DNSLookup = trace.dnsDone.Sub(trace.start).Seconds()
-				out.TCPConn = trace.connectDone.Sub(trace.dnsDone).Seconds()
-				out.TLSHandshake = trace.gotConn.Sub(trace.dnsDone).Seconds()
-				out.ServerProcessing = trace.responseStart.Sub(trace.gotConn).Seconds()
-				out.ContentTransfer = trace.end.Sub(trace.responseStart).Seconds()
-			}
-
 			out.DNSLookup = trace.dnsDone.Sub(trace.start).Seconds()
 			out.TCPConn = trace.gotConn.Sub(trace.dnsDone).Seconds()
 			out.ServerProcessing = trace.responseStart.Sub(trace.gotConn).Seconds()
 			out.ContentTransfer = trace.end.Sub(trace.responseStart).Seconds()
+			out.StatusCode = resp.StatusCode
+
+			if trace.tls {
+				out.TLSHandshake = trace.gotConn.Sub(trace.dnsDone).Seconds()
+			}
 
 			outPutChan <- out
 		}
@@ -81,6 +77,12 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 }
 
 func (c *cassowary) coordinate() error {
+	var dnsDur []float64
+	var tcpDur []float64
+	var tlsDur []float64
+	var serverDur []float64
+	var transferDur []float64
+	var statusCodes []int
 
 	tls, err := isTLS(c.baseURL)
 	if err != nil {
@@ -139,6 +141,46 @@ func (c *cassowary) coordinate() error {
 
 	end := time.Since(start)
 	fmt.Println(end)
+
+	for item := range channel {
+		if item.DNSLookup != 0 {
+			dnsDur = append(dnsDur, item.DNSLookup)
+		}
+		tcpDur = append(tcpDur, item.TCPConn)
+		if c.isTLS {
+			tlsDur = append(tlsDur, item.TLSHandshake)
+		}
+		serverDur = append(serverDur, item.ServerProcessing)
+		transferDur = append(transferDur, item.ContentTransfer)
+		statusCodes = append(statusCodes, item.StatusCode)
+	}
+
+	// DNS
+	dnsMean := calcMean(dnsDur)
+	dnsMedian := calcMedian(dnsDur)
+	dns95 := calc95Percentile(dnsDur)
+
+	// TCP
+	tcpMean := calcMean(tcpDur)
+	tcpMedian := calcMedian(tcpDur)
+	tcp95 := calc95Percentile(tcpDur)
+
+	// TLS
+	if c.isTLS {
+		tlsMean := calcMean(tlsDur)
+		tlsMedian := calcMedian(tlsDur)
+		tls95 := calc95Percentile(tlsDur)
+	}
+
+	// Server Processing
+	serverMean := calcMean(serverDur)
+	serverMedian := calcMedian(serverDur)
+	server95 := calc95Percentile(serverDur)
+
+	// Content Transfer
+	transferMean := calcMean(transferDur)
+	transferMedian := calcMedian(transferDur)
+	transfer95 := calc95Percentile(transferDur)
 
 	return nil
 }
