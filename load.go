@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptrace"
 	"strconv"
@@ -25,31 +28,42 @@ type durationMetrics struct {
 
 func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
 	for item := range workerChan {
-		tt := newTransport(c.client.Transport)
-		c.client.Transport = tt
+
 		fmt.Println(item)
-		fmt.Println(c)
 
 		request, err := http.NewRequest("GET", c.baseURL, nil)
 		if err != nil {
 			panic(err)
 		}
+		var t0, t1, t2, t3, t4, t5, t6 time.Time
 
 		trace := &httptrace.ClientTrace{
-			DNSStart:             tt.DNSStart,
-			DNSDone:              tt.DNSDone,
-			ConnectStart:         tt.ConnectStart,
-			ConnectDone:          tt.ConnectDone,
-			GotConn:              tt.GotConn,
-			GotFirstResponseByte: tt.GotFirstResponseByte,
+			DNSStart: func(_ httptrace.DNSStartInfo) { t0 = time.Now() },
+			DNSDone:  func(_ httptrace.DNSDoneInfo) { t1 = time.Now() },
+			ConnectStart: func(_, _ string) {
+				if t1.IsZero() {
+					// connecting directly to IP
+					t1 = time.Now()
+				}
+			},
+			ConnectDone: func(net, addr string, err error) {
+				if err != nil {
+					log.Fatalf("unable to connect to host %v: %v", addr, err)
+				}
+				t2 = time.Now()
+
+			},
+			GotConn:              func(_ httptrace.GotConnInfo) { t3 = time.Now() },
+			GotFirstResponseByte: func() { t4 = time.Now() },
+			TLSHandshakeStart:    func() { t5 = time.Now() },
+			TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { t6 = time.Now() },
 		}
 
-		request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
+		request = request.WithContext(httptrace.WithClientTrace(context.Background(), trace))
 		resp, err := c.client.Do(request)
 		if err != nil {
 			panic(err)
 		}
-
 		if resp != nil {
 			_, err = io.Copy(ioutil.Discard, resp.Body)
 			if err != nil {
@@ -60,22 +74,25 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		c.bar.Add(1)
 
 		// Body fully read here
-		tt.current.end = time.Now()
-		for _, trace := range tt.traces {
-			out := durationMetrics{}
-
-			out.DNSLookup = trace.dnsDone.Sub(trace.start).Seconds()
-			out.TCPConn = trace.gotConn.Sub(trace.dnsDone).Seconds()
-			out.ServerProcessing = trace.responseStart.Sub(trace.gotConn).Seconds()
-			out.ContentTransfer = trace.end.Sub(trace.responseStart).Seconds()
-			out.StatusCode = resp.StatusCode
-
-			if trace.tls {
-				out.TLSHandshake = trace.gotConn.Sub(trace.dnsDone).Seconds()
-			}
-
-			outPutChan <- out
+		t7 := time.Now()
+		if t0.IsZero() {
+			// we skipped DNS
+			t0 = t1
 		}
+
+		out := durationMetrics{
+			DNSLookup:        float64(t1.Sub(t0) / time.Millisecond), // dns lookup
+			TCPConn:          float64(t3.Sub(t1) / time.Millisecond), // tcp connection
+			ServerProcessing: float64(t4.Sub(t3) / time.Millisecond), // server processing
+			ContentTransfer:  float64(t7.Sub(t4) / time.Millisecond), // content transfer
+			StatusCode:       resp.StatusCode,
+		}
+
+		if c.isTLS {
+			out.TLSHandshake = float64(t6.Sub(t5) / time.Millisecond) // tls handshake
+		}
+
+		outPutChan <- out
 	}
 }
 
