@@ -27,9 +27,7 @@ type durationMetrics struct {
 }
 
 func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
-	for item := range workerChan {
-
-		fmt.Println(item)
+	for _ = range workerChan {
 
 		request, err := http.NewRequest("GET", c.baseURL, nil)
 		if err != nil {
@@ -128,9 +126,6 @@ func (c *cassowary) coordinate() error {
 	c.bar = progressbar.New(c.requests)
 
 	if c.fileMode {
-		fmt.Println("got here")
-		fmt.Println(c.inputFile)
-		fmt.Println("got here")
 		urlSuffixes, err = readFile(c.inputFile)
 		if err != nil {
 			panic(err)
@@ -139,8 +134,6 @@ func (c *cassowary) coordinate() error {
 		c.requests = len(urlSuffixes)
 		fmt.Println(urlSuffixes)
 	}
-	fmt.Println("apa")
-	fmt.Println(c)
 
 	var wg sync.WaitGroup
 	channel := make(chan durationMetrics, c.requests)
@@ -160,6 +153,9 @@ func (c *cassowary) coordinate() error {
 		for _, line := range urlSuffixes {
 			workerChan <- line
 		}
+	}
+	for i := 0; i < c.requests; i++ {
+		workerChan <- "a"
 	}
 
 	close(workerChan)
