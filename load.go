@@ -169,7 +169,10 @@ func (c *cassowary) coordinate() error {
 		if item.DNSLookup != 0 {
 			dnsDur = append(dnsDur, item.DNSLookup)
 		}
-		tcpDur = append(tcpDur, item.TCPConn)
+		if item.TCPConn < 1000 {
+			tcpDur = append(tcpDur, item.TCPConn)
+		}
+		//tcpDur = append(tcpDur, item.TCPConn)
 		if c.isTLS {
 			tlsDur = append(tlsDur, item.TLSHandshake)
 		}
