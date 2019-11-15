@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/schollz/progressbar"
@@ -13,6 +14,7 @@ import (
 var (
 	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
+	errNotValidURL      = errors.New("Error: Not a valud URL. Must have the following format: http{s}://{host}")
 )
 
 type cassowary struct {
@@ -28,6 +30,11 @@ type cassowary struct {
 	bar              *progressbar.ProgressBar
 }
 
+func isValidURL(urlStr string) bool {
+	u, err := url.Parse(urlStr)
+	return err == nil && u.Scheme != "" && u.Host != ""
+}
+
 func validateRun(c *cli.Context) error {
 
 	prometheusEnabled := false
@@ -38,6 +45,10 @@ func validateRun(c *cli.Context) error {
 
 	if c.Int("requests") == 0 {
 		return errRequestNo
+	}
+
+	if isValidURL(c.String("url")) == false {
+		return errNotValidURL
 	}
 
 	if c.String("prompushgwurl") != "" {
@@ -68,6 +79,10 @@ func validateRunFile(c *cli.Context) error {
 
 	if c.Int("requests") == 0 {
 		return errRequestNo
+	}
+
+	if isValidURL(c.String("url")) == false {
+		return errNotValidURL
 	}
 
 	if c.String("prompushgwurl") != "" {
