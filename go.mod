@@ -1,4 +1,4 @@
-module cassowary
+module github.com/rogerwelin/cassowary
 
 go 1.13
 
