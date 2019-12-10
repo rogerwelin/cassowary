@@ -27,11 +27,21 @@ type durationMetrics struct {
 }
 
 func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
-	for _ = range workerChan {
+	for URLitem := range workerChan {
 
-		request, err := http.NewRequest("GET", c.baseURL, nil)
-		if err != nil {
-			panic(err)
+		var request *http.Request
+		var err error
+
+		if c.fileMode {
+			request, err = http.NewRequest("GET", c.baseURL+URLitem, nil)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			request, err = http.NewRequest("GET", c.baseURL, nil)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		if len(c.requestHeader) == 2 {
@@ -158,9 +168,10 @@ func (c *cassowary) coordinate() error {
 		for _, line := range urlSuffixes {
 			workerChan <- line
 		}
-	}
-	for i := 0; i < c.requests; i++ {
-		workerChan <- "a"
+	} else {
+		for i := 0; i < c.requests; i++ {
+			workerChan <- "a"
+		}
 	}
 
 	close(workerChan)
