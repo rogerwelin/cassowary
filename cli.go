@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 
 	"github.com/schollz/progressbar"
 	"github.com/urfave/cli"
@@ -31,17 +29,6 @@ type cassowary struct {
 	requestHeader    []string
 	client           *http.Client
 	bar              *progressbar.ProgressBar
-}
-
-func isValidURL(urlStr string) bool {
-	u, err := url.Parse(urlStr)
-	return err == nil && u.Scheme != "" && u.Host != ""
-}
-
-func splitHeader(header string) (int, []string) {
-	splitted := strings.Split(header, ":")
-	return len(splitted), splitted
-
 }
 
 func validateRun(c *cli.Context) error {
