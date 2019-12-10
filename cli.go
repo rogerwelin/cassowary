@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/schollz/progressbar"
 	"github.com/urfave/cli"
@@ -15,6 +16,7 @@ var (
 	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
 	errNotValidURL      = errors.New("Error: Not a valud URL. Must have the following format: http{s}://{host}")
+	errNotValidHeader   = errors.New("Error: Not a valid header value. Did you forget : ?")
 )
 
 type cassowary struct {
@@ -26,6 +28,7 @@ type cassowary struct {
 	requests         int
 	promExport       bool
 	promURL          string
+	requestHeader    []string
 	client           *http.Client
 	bar              *progressbar.ProgressBar
 }
@@ -35,9 +38,16 @@ func isValidURL(urlStr string) bool {
 	return err == nil && u.Scheme != "" && u.Host != ""
 }
 
+func splitHeader(header string) (int, []string) {
+	splitted := strings.Split(header, ":")
+	return len(splitted), splitted
+
+}
+
 func validateRun(c *cli.Context) error {
 
 	prometheusEnabled := false
+	var header []string
 
 	if c.Int("concurrency") == 0 {
 		return errConcurrencyLevel
@@ -55,11 +65,20 @@ func validateRun(c *cli.Context) error {
 		prometheusEnabled = true
 	}
 
+	if c.String("header") != "" {
+		length := 0
+		length, header = splitHeader(c.String("header"))
+		if length != 2 {
+			return errNotValidHeader
+		}
+	}
+
 	cass := &cassowary{
 		fileMode:         false,
 		baseURL:          c.String("url"),
 		concurrencyLevel: c.Int("concurrency"),
 		requests:         c.Int("requests"),
+		requestHeader:    header,
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
 	}
@@ -72,6 +91,7 @@ func validateRun(c *cli.Context) error {
 func validateRunFile(c *cli.Context) error {
 
 	prometheusEnabled := false
+	var header []string
 
 	if c.Int("concurrency") == 0 {
 		return errConcurrencyLevel
@@ -89,12 +109,21 @@ func validateRunFile(c *cli.Context) error {
 		prometheusEnabled = true
 	}
 
+	if c.String("header") != "" {
+		length := 0
+		length, header = splitHeader(c.String("header"))
+		if length != 2 {
+			return errNotValidHeader
+		}
+	}
+
 	cass := &cassowary{
 		fileMode:         true,
 		inputFile:        c.String("file"),
 		baseURL:          c.String("base-url"),
 		concurrencyLevel: c.Int("concurrency"),
 		requests:         c.Int("requests"),
+		requestHeader:    header,
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
 	}

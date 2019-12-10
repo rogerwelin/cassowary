@@ -33,6 +33,11 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		if err != nil {
 			panic(err)
 		}
+
+		if len(c.requestHeader) == 2 {
+			request.Header.Add(c.requestHeader[0], c.requestHeader[1])
+		}
+
 		var t0, t1, t2, t3, t4, t5, t6 time.Time
 
 		trace := &httptrace.ClientTrace{
