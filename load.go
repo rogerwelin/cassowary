@@ -124,7 +124,7 @@ func (c *cassowary) coordinate() error {
 	c.isTLS = tls
 
 	col := color.New(color.FgCyan).Add(color.Underline)
-	col.Printf("\nStarting Load Test with %d concurrent users\n\n", c.concurrencyLevel)
+	col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.requests, c.concurrencyLevel)
 
 	var urlSuffixes []string
 
