@@ -20,7 +20,6 @@ import (
 type durationMetrics struct {
 	DNSLookup        float64
 	TCPConn          float64
-	TLSHandshake     float64
 	ServerProcessing float64
 	ContentTransfer  float64
 	StatusCode       int
@@ -102,7 +101,9 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		}
 
 		if c.isTLS {
-			out.TLSHandshake = float64(t6.Sub(t5) / time.Millisecond) // tls handshake
+			tlsHandshake := float64(t6.Sub(t5) / time.Millisecond) // tls handshake
+			// if tls handshake we add it to the conn
+			out.TCPConn = out.TCPConn + tlsHandshake
 		}
 
 		outPutChan <- out
@@ -112,7 +113,6 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 func (c *cassowary) coordinate() error {
 	var dnsDur []float64
 	var tcpDur []float64
-	var tlsDur []float64
 	var serverDur []float64
 	var transferDur []float64
 	var statusCodes []int
@@ -188,10 +188,6 @@ func (c *cassowary) coordinate() error {
 		if item.TCPConn < 1000 {
 			tcpDur = append(tcpDur, item.TCPConn)
 		}
-		//tcpDur = append(tcpDur, item.TCPConn)
-		if c.isTLS {
-			tlsDur = append(tlsDur, item.TLSHandshake)
-		}
 		serverDur = append(serverDur, item.ServerProcessing)
 		transferDur = append(transferDur, item.ContentTransfer)
 		statusCodes = append(statusCodes, item.StatusCode)
@@ -206,17 +202,6 @@ func (c *cassowary) coordinate() error {
 	tcpMean := calcMean(tcpDur)
 	tcpMedian := calcMedian(tcpDur)
 	tcp95 := calc95Percentile(tcpDur)
-
-	// TLS
-	var tlsMean float64
-	var tlsMedian float64
-	var tls95 string
-
-	if c.isTLS {
-		tlsMean = calcMean(tlsDur)
-		tlsMedian = calcMedian(tlsDur)
-		tls95 = calc95Percentile(tlsDur)
-	}
 
 	// Server Processing
 	serverMean := calcMean(serverDur)
@@ -233,30 +218,6 @@ func (c *cassowary) coordinate() error {
 
 	// Failed Requests
 	failedR := failedRequests(statusCodes)
-
-	if c.isTLS {
-		printf(summaryTLSTable,
-			color.CyanString(fmt.Sprintf("%.2f", dnsMean)),
-			color.CyanString(fmt.Sprintf("%.2f", dnsMedian)),
-			color.CyanString(dns95),
-			color.CyanString(fmt.Sprintf("%.2f", tcpMean)),
-			color.CyanString(fmt.Sprintf("%.2f", tcpMedian)),
-			color.CyanString(tcp95),
-			color.CyanString(fmt.Sprintf("%.2f", tlsMean)),
-			color.CyanString(fmt.Sprintf("%.2f", tlsMedian)),
-			color.CyanString(tls95),
-			color.CyanString(fmt.Sprintf("%.2f", serverMean)),
-			color.CyanString(fmt.Sprintf("%.2f", serverMedian)),
-			color.CyanString(server95),
-			color.CyanString(fmt.Sprintf("%.2f", transferMean)),
-			color.CyanString(fmt.Sprintf("%.2f", transferMedian)),
-			color.CyanString(transfer95),
-			color.CyanString(strconv.Itoa(c.requests)),
-			color.CyanString(failedR),
-			color.CyanString(reqS),
-		)
-		return nil
-	}
 
 	printf(summaryTable,
 		color.CyanString(fmt.Sprintf("%f", dnsMean)),
@@ -275,5 +236,9 @@ func (c *cassowary) coordinate() error {
 		color.CyanString(failedR),
 		color.CyanString(reqS),
 	)
+
+	// fix reuse conn
+	// fmt.Println(tcpDur)
+	// fmt.Println(serverDur)
 	return nil
 }
