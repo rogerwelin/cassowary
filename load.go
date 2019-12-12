@@ -20,6 +20,7 @@ import (
 type durationMetrics struct {
 	DNSLookup        float64
 	TCPConn          float64
+	TLSHandshake     float64
 	ServerProcessing float64
 	ContentTransfer  float64
 	StatusCode       int
@@ -93,17 +94,18 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		}
 
 		out := durationMetrics{
-			DNSLookup:        float64(t1.Sub(t0) / time.Millisecond), // dns lookup
-			TCPConn:          float64(t3.Sub(t1) / time.Millisecond), // tcp connection
+			DNSLookup: float64(t1.Sub(t0) / time.Millisecond), // dns lookup
+			//TCPConn:          float64(t3.Sub(t1) / time.Millisecond), // tcp connection
 			ServerProcessing: float64(t4.Sub(t3) / time.Millisecond), // server processing
 			ContentTransfer:  float64(t7.Sub(t4) / time.Millisecond), // content transfer
 			StatusCode:       resp.StatusCode,
 		}
 
 		if c.isTLS {
-			tlsHandshake := float64(t6.Sub(t5) / time.Millisecond) // tls handshake
-			// if tls handshake we add it to the conn
-			out.TCPConn = out.TCPConn + tlsHandshake
+			out.TCPConn = float64(t2.Sub(t1) / time.Millisecond)
+			out.TLSHandshake = float64(t6.Sub(t5) / time.Millisecond) // tls handshake
+		} else {
+			out.TCPConn = float64(t3.Sub(t1) / time.Millisecond)
 		}
 
 		outPutChan <- out
@@ -113,6 +115,7 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 func (c *cassowary) coordinate() error {
 	var dnsDur []float64
 	var tcpDur []float64
+	var tlsDur []float64
 	var serverDur []float64
 	var transferDur []float64
 	var statusCodes []int
@@ -143,7 +146,7 @@ func (c *cassowary) coordinate() error {
 	if c.fileMode {
 		urlSuffixes, err = readFile(c.inputFile)
 		if err != nil {
-			panic(err)
+			//panic(err)
 			return err
 		}
 		c.requests = len(urlSuffixes)
@@ -188,15 +191,16 @@ func (c *cassowary) coordinate() error {
 		if item.TCPConn < 1000 {
 			tcpDur = append(tcpDur, item.TCPConn)
 		}
+		if c.isTLS {
+			tlsDur = append(tlsDur, item.TLSHandshake)
+		}
 		serverDur = append(serverDur, item.ServerProcessing)
 		transferDur = append(transferDur, item.ContentTransfer)
 		statusCodes = append(statusCodes, item.StatusCode)
 	}
 
 	// DNS
-	dnsMean := calcMean(dnsDur)
 	dnsMedian := calcMedian(dnsDur)
-	dns95 := calc95Percentile(dnsDur)
 
 	// TCP
 	tcpMean := calcMean(tcpDur)
@@ -220,25 +224,23 @@ func (c *cassowary) coordinate() error {
 	failedR := failedRequests(statusCodes)
 
 	printf(summaryTable,
-		color.CyanString(fmt.Sprintf("%f", dnsMean)),
-		color.CyanString(fmt.Sprintf("%f", dnsMedian)),
-		color.CyanString(dns95),
-		color.CyanString(fmt.Sprintf("%f", tcpMean)),
-		color.CyanString(fmt.Sprintf("%f", tcpMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", tcpMean)),
+		color.CyanString(fmt.Sprintf("%.2f", tcpMedian)),
 		color.CyanString(tcp95),
-		color.CyanString(fmt.Sprintf("%f", serverMean)),
-		color.CyanString(fmt.Sprintf("%f", serverMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", serverMean)),
+		color.CyanString(fmt.Sprintf("%.2f", serverMedian)),
 		color.CyanString(server95),
-		color.CyanString(fmt.Sprintf("%f", transferMean)),
-		color.CyanString(fmt.Sprintf("%f", transferMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", transferMean)),
+		color.CyanString(fmt.Sprintf("%.2f", transferMedian)),
 		color.CyanString(transfer95),
 		color.CyanString(strconv.Itoa(c.requests)),
 		color.CyanString(failedR),
+		color.CyanString(fmt.Sprintf("%.2f", dnsMedian)),
 		color.CyanString(reqS),
 	)
 
-	// fix reuse conn
-	// fmt.Println(tcpDur)
-	// fmt.Println(serverDur)
+	//fmt.Println(tcpDur)
+	//fmt.Println(dnsDur)
+	//fmt.Println(tlsDur)
 	return nil
 }

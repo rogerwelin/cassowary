@@ -56,7 +56,7 @@ func calc95Percentile(nums []float64) string {
 
 func requestsPerSecond(request int, duration time.Duration) string {
 	convertedDuration := float64(duration) / float64(time.Second)
-	return strconv.FormatFloat(float64(request)/convertedDuration, 'f', 6, 64)
+	return strconv.FormatFloat(float64(request)/convertedDuration, 'f', 2, 64)
 }
 
 func failedRequests(slice []int) string {
