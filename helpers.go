@@ -26,7 +26,11 @@ func isTLS(baseURL string) (bool, error) {
 		return false, err
 	}
 
-	if scheme.String() == "http" {
+	if scheme.Scheme == "http" {
+		return false, nil
+	}
+
+	if scheme.Scheme == "" {
 		return false, nil
 	}
 
