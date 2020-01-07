@@ -10,6 +10,7 @@ var testURL = []struct {
 	{"www.google.com", false},
 	{"https://www.google.com", true},
 	{"/foo/bar", false},
+	{"http://localhost:8000", true},
 }
 
 var testHeader = []struct {

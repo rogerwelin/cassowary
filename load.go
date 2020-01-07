@@ -146,11 +146,11 @@ func (c *cassowary) coordinate() error {
 	if c.fileMode {
 		urlSuffixes, err = readFile(c.inputFile)
 		if err != nil {
-			//panic(err)
 			return err
 		}
 		c.requests = len(urlSuffixes)
-		fmt.Println(urlSuffixes)
+		c.bar = progressbar.New(c.requests)
+		//fmt.Println(urlSuffixes)
 	}
 
 	var wg sync.WaitGroup

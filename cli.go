@@ -13,7 +13,7 @@ import (
 var (
 	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
-	errNotValidURL      = errors.New("Error: Not a valud URL. Must have the following format: http{s}://{host}")
+	errNotValidURL      = errors.New("Error: Not a valid URL. Must have the following format: http{s}://{host}")
 	errNotValidHeader   = errors.New("Error: Not a valid header value. Did you forget : ?")
 )
 
@@ -84,10 +84,6 @@ func validateRunFile(c *cli.Context) error {
 		return errConcurrencyLevel
 	}
 
-	if c.Int("requests") == 0 {
-		return errRequestNo
-	}
-
 	if isValidURL(c.String("url")) == false {
 		return errNotValidURL
 	}
@@ -107,9 +103,8 @@ func validateRunFile(c *cli.Context) error {
 	cass := &cassowary{
 		fileMode:         true,
 		inputFile:        c.String("file"),
-		baseURL:          c.String("base-url"),
+		baseURL:          c.String("url"),
 		concurrencyLevel: c.Int("concurrency"),
-		requests:         c.Int("requests"),
 		requestHeader:    header,
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
@@ -129,10 +124,10 @@ func runCLI(args []string) {
 	app.Commands = []cli.Command{
 		{
 			Name:  "run-file",
-			Usage: "start load test",
+			Usage: "start load test in spread mode",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:     "u, base-url",
+					Name:     "u, url",
 					Usage:    "the base url (absoluteURI) to be used",
 					Required: true,
 				},
