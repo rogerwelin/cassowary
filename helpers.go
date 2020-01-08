@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -35,4 +36,11 @@ func isTLS(baseURL string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func stringToFloat(input string) float64 {
+	if s, err := strconv.ParseFloat(input, 64); err == nil {
+		return s
+	}
+	return 0.00
 }

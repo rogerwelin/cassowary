@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 )
 
 var (
@@ -55,6 +56,36 @@ var (
 	})
 )
 
-func (c *cassowary) pushPrometheusMetrics() error {
+func (c *cassowary) pushPrometheusMetrics(t1, t2, t3, s1, s2, s3, tf1, tf2, tf3, r1, r2, r3 float64) error {
+	promTCPConnMean.Set(t1)
+	promTCPConnMedian.Set(t2)
+	promTCPConn95P.Set(t3)
+	promServerProcessingMean.Set(s1)
+	promServerProcessingMedian.Set(s2)
+	promServerProcessing95p.Set(s3)
+	promContentTransferMean.Set(tf1)
+	promContentTransferMedian.Set(tf2)
+	promContentTransfer95p.Set(tf3)
+	promTotalRequests.Set(r1)
+	promFailedRequests.Set(r2)
+	promRequestPerSecond.Set(r3)
+
+	if err := push.New(c.promURL, "cassowary_load_test").
+		Collector(promTCPConnMean).
+		Collector(promTCPConnMedian).
+		Collector(promTCPConn95P).
+		Collector(promServerProcessingMean).
+		Collector(promServerProcessingMedian).
+		Collector(promServerProcessing95p).
+		Collector(promContentTransferMean).
+		Collector(promContentTransferMedian).
+		Collector(promContentTransfer95p).
+		Collector(promTotalRequests).
+		Collector(promFailedRequests).
+		Collector(promRequestPerSecond).
+		Grouping("url", c.baseURL).
+		Push(); err != nil {
+		return err
+	}
 	return nil
 }

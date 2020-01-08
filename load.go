@@ -239,6 +239,27 @@ func (c *cassowary) coordinate() error {
 		color.CyanString(reqS),
 	)
 
+	if c.promExport == true {
+
+		err := c.pushPrometheusMetrics(
+			tcpMean,
+			tcpMedian,
+			stringToFloat(tcp95),
+			serverMean,
+			serverMedian,
+			stringToFloat(server95),
+			transferMean,
+			transferMedian,
+			stringToFloat(transfer95),
+			float64(c.requests),
+			stringToFloat(failedR),
+			stringToFloat(reqS),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	//fmt.Println(tcpDur)
 	//fmt.Println(dnsDur)
 	//fmt.Println(tlsDur)
