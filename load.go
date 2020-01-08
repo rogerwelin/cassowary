@@ -240,7 +240,6 @@ func (c *cassowary) coordinate() error {
 	)
 
 	if c.promExport == true {
-
 		err := c.pushPrometheusMetrics(
 			tcpMean,
 			tcpMedian,
