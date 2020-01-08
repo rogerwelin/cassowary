@@ -20,11 +20,11 @@ var testNums = []struct {
 
 var testStatusCodes = []struct {
 	in             []int
-	expectedNon200 string
+	expectedNon200 int
 }{
-	{[]int{200, 200, 404, 504, 200, 404, 504}, "4"},
-	{[]int{200, 404, 404, 504, 500}, "4"},
-	{[]int{405, 401, 401, 200, 408, 502, 502, 200}, "6"},
+	{[]int{200, 200, 404, 504, 200, 404, 504}, 4},
+	{[]int{200, 404, 404, 504, 500}, 4},
+	{[]int{405, 401, 401, 200, 408, 502, 502, 200}, 6},
 }
 
 var testPercentile = []struct {
@@ -85,7 +85,7 @@ func TestFailedRequests(t *testing.T) {
 	for i, tt := range testStatusCodes {
 		actual := failedRequests(tt.in)
 		if actual != tt.expectedNon200 {
-			t.Errorf("test: %d, failedRequests(%d): expected %s, actual %s", i+1, tt.in, tt.expectedNon200, actual)
+			t.Errorf("test: %d, failedRequests(%d): expected %d, actual %d", i+1, tt.in, tt.expectedNon200, actual)
 		}
 	}
 }

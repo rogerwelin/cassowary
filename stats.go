@@ -59,7 +59,7 @@ func requestsPerSecond(request int, duration time.Duration) string {
 	return strconv.FormatFloat(float64(request)/convertedDuration, 'f', 2, 64)
 }
 
-func failedRequests(slice []int) string {
+func failedRequests(slice []int) int {
 	non200 := 0
 
 	for _, item := range slice {
@@ -67,5 +67,5 @@ func failedRequests(slice []int) string {
 			non200++
 		}
 	}
-	return strconv.Itoa(non200)
+	return non200
 }

@@ -234,7 +234,7 @@ func (c *cassowary) coordinate() error {
 		color.CyanString(fmt.Sprintf("%.2f", transferMedian)),
 		color.CyanString(transfer95),
 		color.CyanString(strconv.Itoa(c.requests)),
-		color.CyanString(failedR),
+		color.CyanString(strconv.Itoa(failedR)),
 		color.CyanString(fmt.Sprintf("%.2f", dnsMedian)),
 		color.CyanString(reqS),
 	)
@@ -252,7 +252,7 @@ func (c *cassowary) coordinate() error {
 			transferMedian,
 			stringToFloat(transfer95),
 			float64(c.requests),
-			stringToFloat(failedR),
+			float64(failedR),
 			stringToFloat(reqS),
 		)
 		if err != nil {
