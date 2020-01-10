@@ -7,7 +7,7 @@ import (
 )
 
 type jsonOutput struct {
-	BaseURL           string                `json:"base_url`
+	BaseURL           string                `json:"base_url"`
 	TotalRequests     string                `json:"total_requests"`
 	FailedRequests    string                `json:"failed_requests"`
 	RequestsPerSecond string                `json:"requests_per_second"`

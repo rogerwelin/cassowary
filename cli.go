@@ -24,6 +24,7 @@ type cassowary struct {
 	baseURL          string
 	concurrencyLevel int
 	requests         int
+	exportMetrics    bool
 	promExport       bool
 	promURL          string
 	requestHeader    []string
@@ -68,6 +69,7 @@ func validateRun(c *cli.Context) error {
 		requestHeader:    header,
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
+		exportMetrics:    c.Bool("json-metrics"),
 	}
 
 	//fmt.Printf("%+v\n", cass)
@@ -108,6 +110,7 @@ func validateRunFile(c *cli.Context) error {
 		requestHeader:    header,
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
+		exportMetrics:    c.Bool("json-metrics"),
 	}
 
 	cass.coordinate()
@@ -147,7 +150,11 @@ func runCLI(args []string) {
 				},
 				cli.StringFlag{
 					Name:  "H, header",
-					Usage: "Add Arbitrary header line, eg. 'Host: www.example.com'",
+					Usage: "add Arbitrary header line, eg. 'Host: www.example.com'",
+				},
+				cli.BoolFlag{
+					Name:  "F, json-metrics",
+					Usage: "outputs metrics to a json file by setting flag to true",
 				},
 			},
 			Action: validateRunFile,
@@ -177,7 +184,11 @@ func runCLI(args []string) {
 				},
 				cli.StringFlag{
 					Name:  "H, header",
-					Usage: "Add Arbitrary header line, eg. 'Host: www.example.com'",
+					Usage: "add Arbitrary header line, eg. 'Host: www.example.com'",
+				},
+				cli.BoolFlag{
+					Name:  "F, json-metrics",
+					Usage: "outputs metrics to a json file by setting flag to true",
 				},
 			},
 			Action: validateRun,
