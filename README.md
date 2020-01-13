@@ -1,8 +1,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rogerwelin/cassowary)](https://goreportcard.com/report/github.com/rogerwelin/cassowary)
 [![Build Status](https://travis-ci.org/rogerwelin/cassowary.svg?branch=master)](https://travis-ci.org/rogerwelin/cassowary)
 
+<p align="center"><a href="https://github.com/rogerwelin/cassowary"><img src="cass-logo.png" alt="cassowary"></a></p>
 
-<p align="center">![alt text](cass-logo.png "cassowary")</p>
 
 **Cassowary** is a modern HTTP(S), intuitive & cross-platform load testing tool built in Go for developers, testers and sysadmins. Cassowary draws inspiration from awesome projects like k6, ab & httpstat.
 
