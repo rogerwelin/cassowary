@@ -20,4 +20,4 @@ Features
 - **Configurable**: Able to pass in arbitrary HTTP headers
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 
-<img src="https://i.imgur.com/geJykYH.gifv" width="40" height="40" />
+<img src="https://i.imgur.com/geJykYH.gif" width="40" height="40" />
