@@ -259,6 +259,10 @@ func (c *cassowary) coordinate() error {
 		}
 	}
 
+	if c.exportMetrics {
+		c.outPutJSON(failedR, stringToFloat(reqS), tcpMean, tcpMedian, tcp95, serverMean, serverMedian, server95, transferMean, transferMedian, transfer95)
+	}
+
 	//fmt.Println(tcpDur)
 	//fmt.Println(dnsDur)
 	//fmt.Println(tlsDur)
