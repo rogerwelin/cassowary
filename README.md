@@ -1,6 +1,12 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rogerwelin/cassowary)](https://goreportcard.com/report/github.com/rogerwelin/cassowary)
 [![Build Status](https://travis-ci.org/rogerwelin/cassowary.svg?branch=master)](https://travis-ci.org/rogerwelin/cassowary)
 
+
+<p align="center">
+  <a href="https://goreportcard.com/badge/github.com/rogerwelin/cassowary"><img src="https://goreportcard.com/badge/github.com/rogerwelin/cassowary" alt="Go Report Card"></a>
+  <a href="https://travis-ci.org/rogerwelin/cassowary"><img src="https://travis-ci.org/rogerwelin/cassowary.svg?branch=master" alt="Build status"></a>
+</p>
+
 <p align="center"><a href="https://github.com/rogerwelin/cassowary"><img src="cass-logo.png" alt="cassowary"></a></p>
 
 
