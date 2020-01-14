@@ -8,6 +8,10 @@ import (
 )
 
 func calcMean(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0.0
+	}
+
 	var total float64
 	length := len(nums)
 	for _, item := range nums {
@@ -18,6 +22,10 @@ func calcMean(nums []float64) float64 {
 }
 
 func calcMedian(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0.0
+	}
+
 	sort.Float64s(nums)
 
 	isEven := len(nums)%2 == 0
@@ -30,6 +38,10 @@ func calcMedian(nums []float64) float64 {
 }
 
 func calcVarience(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0.0
+	}
+
 	var variance float64
 	mean := calcMean(nums)
 
@@ -41,6 +53,10 @@ func calcVarience(nums []float64) float64 {
 }
 
 func calcStdDev(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0.0
+	}
+
 	variance := calcVarience(nums)
 	return math.Sqrt(variance)
 }
