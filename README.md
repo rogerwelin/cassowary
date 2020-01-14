@@ -21,3 +21,10 @@ Features
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 
 <img src="https://i.imgur.com/geJykYH.gif" />
+
+
+Installation  
+--------
+
+Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
+
