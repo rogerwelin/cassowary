@@ -126,9 +126,6 @@ func (c *cassowary) coordinate() error {
 	}
 	c.isTLS = tls
 
-	col := color.New(color.FgCyan).Add(color.Underline)
-	col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.requests, c.concurrencyLevel)
-
 	var urlSuffixes []string
 
 	c.client = &http.Client{
@@ -152,6 +149,9 @@ func (c *cassowary) coordinate() error {
 		c.bar = progressbar.New(c.requests)
 		//fmt.Println(urlSuffixes)
 	}
+
+	col := color.New(color.FgCyan).Add(color.Underline)
+	col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.requests, c.concurrencyLevel)
 
 	var wg sync.WaitGroup
 	channel := make(chan durationMetrics, c.requests)

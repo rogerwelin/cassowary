@@ -59,7 +59,7 @@ Example running **cassowary** in file slurp mode where all URL paths are specifi
 ```
 $ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
 
-Starting Load Test with 0 requests using 10 concurrent users
+Starting Load Test with 3925 requests using 10 concurrent users
 
  100% |████████████████████████████████████████| [0s:0s]            599.467161ms
 
