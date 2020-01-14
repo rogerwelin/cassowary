@@ -54,3 +54,8 @@ Summary:
  Req/s...........................: 79.57
 ```
 
+
+Project Status & Contribute  
+--------
+
+Feature-wise I'm quite happy with `cassowary` and hence new features will only be added on a feature request and bug basis. To request a feture create a new issue with the label `feature-request`. For bugs use the label `bug`.
