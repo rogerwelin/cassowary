@@ -4,6 +4,7 @@
   <a href="https://travis-ci.org/rogerwelin/cassowary"><img src="https://travis-ci.org/rogerwelin/cassowary.svg?branch=master" alt="Build status"></a>
   <a href="https://github.com/rogerwelin/cassowary/blob/master/LICENSE"><img src="https://img.shields.io/github/license/rogerwelin/cassowary" alt="License"></a>
   <a href="https://github.com/rogerwelin/cassowary/blob/master/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/rogerwelin/cassowary" alt="Go version"></a>
+  <a href="https://github.com/rogerwelin/cassowary/releases"><img src="https://img.shields.io/github/v/release/rogerwelin/cassowary.svg" alt="Current Release"></a>
 </p>
 
 
@@ -21,3 +22,40 @@ Features
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 
 <img src="https://i.imgur.com/geJykYH.gif" />
+
+
+Installation  
+--------
+
+Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
+
+
+Running Cassowary  
+--------
+
+Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
+
+```
+10:20 $ ./cassowary run -u http://www.example.com -c 10 -n 100
+
+Starting Load Test with 100 requests using 10 concurrent users
+
+ 100% |████████████████████████████████████████| [1s:0s]            1.256773616s
+
+
+ TCP Connect.....................: Avg/mean=101.90ms 	Median=102.00ms	p(95)=105ms
+ Server Processing...............: Avg/mean=100.18ms 	Median=100.50ms	p(95)=103ms
+ Content Transfer................: Avg/mean=0.01ms 	Median=0.00ms	p(95)=0ms
+
+Summary:
+ Total Req.......................: 100
+ Failed Req......................: 0
+ DNS Lookup......................: 115.00ms
+ Req/s...........................: 79.57
+```
+
+
+Project Status & Contribute  
+--------
+
+Feature-wise I'm quite happy with `cassowary` and hence new features will only be added on a feature request and bug basis. To request a feature create a new issue with the label `feature-request`. For bugs use the label `bug`.
