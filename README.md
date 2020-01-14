@@ -28,3 +28,28 @@ Installation
 
 Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
 
+
+Running Cassowary  
+--------
+
+Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
+
+```
+10:20 $ ./cassowary run -u http://www.example.com -c 10 -n 100
+
+Starting Load Test with 100 requests using 10 concurrent users
+
+ 100% |████████████████████████████████████████| [1s:0s]            1.256773616s
+
+
+ TCP Connect.....................: Avg/mean=101.90ms 	Median=102.00ms	p(95)=105ms
+ Server Processing...............: Avg/mean=100.18ms 	Median=100.50ms	p(95)=103ms
+ Content Transfer................: Avg/mean=0.01ms 	Median=0.00ms	p(95)=0ms
+
+Summary:
+ Total Req.......................: 100
+ Failed Req......................: 0
+ DNS Lookup......................: 115.00ms
+ Req/s...........................: 79.57
+```
+
