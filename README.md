@@ -36,7 +36,7 @@ Running Cassowary
 Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
 
 ```
-10:20 $ ./cassowary run -u http://www.example.com -c 10 -n 100
+$ ./cassowary run -u http://www.example.com -c 10 -n 100
 
 Starting Load Test with 100 requests using 10 concurrent users
 
@@ -54,6 +54,26 @@ Summary:
  Req/s...........................: 79.57
 ```
 
+Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified):
+
+```
+$ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
+
+Starting Load Test with 0 requests using 10 concurrent users
+
+ 100% |████████████████████████████████████████| [0s:0s]            599.467161ms
+
+
+ TCP Connect.....................: Avg/mean=1.80ms 	Median=2.00ms	p(95)=3ms
+ Server Processing...............: Avg/mean=0.90ms 	Median=0.00ms	p(95)=3ms
+ Content Transfer................: Avg/mean=0.00ms 	Median=0.00ms	p(95)=0ms
+
+Summary:
+ Total Req.......................: 3925
+ Failed Req......................: 0
+ DNS Lookup......................: 2.00ms
+ Req/s...........................: 6547.48
+```
 
 Project Status & Contribute  
 --------
