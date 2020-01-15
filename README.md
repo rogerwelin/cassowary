@@ -75,6 +75,29 @@ Summary:
  Req/s...........................: 6547.48
 ```
 
+Example exporting **cassowary** json metrics to a file:
+
+```sh
+$ ./cassowary run --json-metrics --json-metrics-file=metrics.json -u http://localhost:5000 -c 125 -n 100000
+
+Starting Load Test with 100000 requests using 125 concurrent users
+
+ 100% |████████████████████████████████████████| [0s:0s]            984.9862ms
+
+
+ TCP Connect.....................: Avg/mean=-0.18ms     Median=0.00ms   p(95)=1ms
+ Server Processing...............: Avg/mean=0.16ms      Median=0.00ms   p(95)=1ms
+ Content Transfer................: Avg/mean=0.01ms      Median=0.00ms   p(95)=0ms
+
+Summary:
+ Total Req.......................: 100000
+ Failed Req......................: 0
+ DNS Lookup......................: 2.00ms
+ Req/s...........................: 101524.27
+```
+
+> If `json-metrics-file` flag is missing then the default filename is `out.json`.
+
 Project Status & Contribute  
 --------
 

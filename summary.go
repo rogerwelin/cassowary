@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/fatih/color"
@@ -54,7 +54,8 @@ func printf(format string, a ...interface{}) {
 	fmt.Fprintf(color.Output, format, a...)
 }
 
-func (c *cassowary) outPutJSON(failedReq int, requestPerSec, tcpMean, tcpMed float64, tcp9p string, serverMean, serverMed float64, server95p string, contentMean, contentMed float64, content95p string) {
+// TODO: replace all these args to a single structure.
+func (c *cassowary) outPutJSON(failedReq int, requestPerSec, tcpMean, tcpMed float64, tcp9p string, serverMean, serverMed float64, server95p string, contentMean, contentMed float64, content95p string) error {
 	tcp9P, _ := strconv.Atoi(tcp9p)
 	server95P, _ := strconv.Atoi(server95p)
 	content95P, _ := strconv.Atoi(content95p)
@@ -80,13 +81,18 @@ func (c *cassowary) outPutJSON(failedReq int, requestPerSec, tcpMean, tcpMed flo
 		},
 	}
 
-	b, err := json.Marshal(output)
-	if err != nil {
-		fmt.Println(err)
-		return
+	filename := c.exportMetricsFile
+	if filename == "" {
+		// default filename for json metrics output.
+		filename = "out.json"
 	}
-	err = ioutil.WriteFile("out.json", b, 0644)
+
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	return enc.Encode(output)
 }

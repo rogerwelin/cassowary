@@ -25,11 +25,14 @@ type cassowary struct {
 	concurrencyLevel int
 	requests         int
 	exportMetrics    bool
-	promExport       bool
-	promURL          string
-	requestHeader    []string
-	client           *http.Client
-	bar              *progressbar.ProgressBar
+	// The filename which json metrics should written
+	// to if `exportMetrics` is true, otherwise it defaults to "out.json".
+	exportMetricsFile string
+	promExport        bool
+	promURL           string
+	requestHeader     []string
+	client            *http.Client
+	bar               *progressbar.ProgressBar
 }
 
 func validateRun(c *cli.Context) error {
@@ -70,11 +73,16 @@ func validateRun(c *cli.Context) error {
 		promExport:       prometheusEnabled,
 		promURL:          c.String("prompushgwurl"),
 		exportMetrics:    c.Bool("json-metrics"),
+		// could have a single --json-output=file.json
+		// as it is not even documented (yet)
+		// but don't break existing usage.
+		// However, the author should make any necessary changes (even breaking ones)
+		// as soon as possible before huge amount of users.
+		exportMetricsFile: c.String("json-metrics-file"),
 	}
 
 	//fmt.Printf("%+v\n", cass)
-	cass.coordinate()
-	return nil
+	return cass.coordinate()
 }
 
 func validateRunFile(c *cli.Context) error {
@@ -103,18 +111,18 @@ func validateRunFile(c *cli.Context) error {
 	}
 
 	cass := &cassowary{
-		fileMode:         true,
-		inputFile:        c.String("file"),
-		baseURL:          c.String("url"),
-		concurrencyLevel: c.Int("concurrency"),
-		requestHeader:    header,
-		promExport:       prometheusEnabled,
-		promURL:          c.String("prompushgwurl"),
-		exportMetrics:    c.Bool("json-metrics"),
+		fileMode:          true,
+		inputFile:         c.String("file"),
+		baseURL:           c.String("url"),
+		concurrencyLevel:  c.Int("concurrency"),
+		requestHeader:     header,
+		promExport:        prometheusEnabled,
+		promURL:           c.String("prompushgwurl"),
+		exportMetrics:     c.Bool("json-metrics"),
+		exportMetricsFile: c.String("json-metrics-file"),
 	}
 
-	cass.coordinate()
-	return nil
+	return cass.coordinate()
 }
 
 func runCLI(args []string) {
@@ -156,6 +164,10 @@ func runCLI(args []string) {
 					Name:  "F, json-metrics",
 					Usage: "outputs metrics to a json file by setting flag to true",
 				},
+				cli.StringFlag{
+					Name:  "json-metrics-file",
+					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
+				},
 			},
 			Action: validateRunFile,
 		},
@@ -189,6 +201,10 @@ func runCLI(args []string) {
 				cli.BoolFlag{
 					Name:  "F, json-metrics",
 					Usage: "outputs metrics to a json file by setting flag to true",
+				},
+				cli.StringFlag{
+					Name:  "json-metrics-file",
+					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
 			},
 			Action: validateRun,
