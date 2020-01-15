@@ -81,11 +81,13 @@ func (c *cassowary) outPutJSON(failedReq int, requestPerSec, tcpMean, tcpMed flo
 		},
 	}
 
-	if c.exportMetricsFile == "" {
-		c.exportMetricsFile = "out.json" // default filename for json metrics output.
+	filename := c.exportMetricsFile
+	if filename == "" {
+		// default filename for json metrics output.
+		filename = "out.json"
 	}
 
-	f, err := os.OpenFile(c.exportMetricsFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
