@@ -186,7 +186,9 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	close(channel)
 
 	end := time.Since(start)
-	fmt.Println(end)
+	if c.DisableTerminalOutput != true {
+		fmt.Println(end)
+	}
 
 	for item := range channel {
 		if item.DNSLookup != 0 {
