@@ -83,7 +83,10 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			}
 			resp.Body.Close()
 		}
-		c.Bar.Add(1)
+
+		if c.DisableTerminalOutput != true {
+			c.Bar.Add(1)
+		}
 
 		// Body fully read here
 		t7 := time.Now()
@@ -149,8 +152,10 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		c.Bar = progressbar.New(c.Requests)
 	}
 
-	col := color.New(color.FgCyan).Add(color.Underline)
-	col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.Requests, c.ConcurrencyLevel)
+	if c.DisableTerminalOutput != true {
+		col := color.New(color.FgCyan).Add(color.Underline)
+		col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.Requests, c.ConcurrencyLevel)
+	}
 
 	var wg sync.WaitGroup
 	channel := make(chan durationMetrics, c.Requests)
@@ -223,6 +228,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	failedR := failedRequests(statusCodes)
 
 	outPut := ResultMetrics{
+		BaseURL:           c.BaseURL,
 		FailedRequests:    failedR,
 		RequestsPerSecond: reqS,
 		TotalRequests:     c.Requests,
