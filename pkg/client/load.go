@@ -138,6 +138,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 			MaxIdleConnsPerHost: 300,
 			MaxConnsPerHost:     300,
 			DisableCompression:  false,
+			DisableKeepAlives:   c.DisableKeepAlive,
 		},
 	}
 

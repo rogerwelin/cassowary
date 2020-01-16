@@ -119,6 +119,18 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+Example disabling http keep-alive (by default keep-alive are enabled):
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --disable-keep-alive
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
+
 **Importing cassowary as a module/library**  
 
 Cassowary can be imported and used as a module in your Go app. Start by fetching the dependency by using go mod:

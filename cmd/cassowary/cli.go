@@ -105,6 +105,7 @@ func validateCLI(c *cli.Context) error {
 		PromURL:           c.String("prompushgwurl"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
+		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 	}
 
 	return runLoadTest(cass)
@@ -144,6 +145,7 @@ func validateCLIFile(c *cli.Context) error {
 		PromURL:           c.String("prompushgwurl"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
+		DisableKeepAlive:  c.Bool("diable-keep-alive"),
 	}
 
 	return runLoadTest(cass)
@@ -193,6 +195,10 @@ func runCLI(args []string) {
 					Name:  "json-metrics-file",
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
+				cli.BoolFlag{
+					Name:  "disable-keep-alive",
+					Usage: "Use this flag to not use http keep-alive",
+				},
 			},
 			Action: validateCLIFile,
 		},
@@ -230,6 +236,10 @@ func runCLI(args []string) {
 				cli.StringFlag{
 					Name:  "json-metrics-file",
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
+				},
+				cli.BoolFlag{
+					Name:  "disable-keep-alive",
+					Usage: "Use this flag to not use http keep-alive",
 				},
 			},
 			Action: validateCLI,

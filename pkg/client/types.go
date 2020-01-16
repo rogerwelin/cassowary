@@ -20,6 +20,7 @@ type Cassowary struct {
 	PromURL               string
 	RequestHeader         []string
 	DisableTerminalOutput bool
+	DisableKeepAlive      bool
 	Client                *http.Client
 	Bar                   *progressbar.ProgressBar
 }
