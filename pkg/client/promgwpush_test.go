@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"io/ioutil"
@@ -33,11 +33,27 @@ func TestPromGwPush(t *testing.T) {
 	)
 	defer pgwOK.Close()
 
-	cass := &cassowary{}
-	cass.promURL = pgwOK.URL
+	cass := &Cassowary{}
+	cass.PromURL = pgwOK.URL
 
-	t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 := 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 1.11, 1.12
-	err := cass.pushPrometheusMetrics(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12)
+	metrics := ResultMetrics{
+		FailedRequests:    1,
+		TotalRequests:     100,
+		RequestsPerSecond: 100.10,
+		TCPStats: tcpStats{
+			TCPMean: 10.0,
+			TCPMedian: 10.0,
+			TCP95p: 10.0,
+		},
+		ProcessingStats: serverProcessingStats{
+			ServerProcessingMean: 1.0,
+			ServerProcessingMedian: 1.0,
+			ServerProcessing95p: 1.0,
+		},
+		
+	}
+
+	err := cass.PushPrometheusMetrics(metrics)
 	if err != nil {
 		t.Error("Got error but wanted OK")
 	}

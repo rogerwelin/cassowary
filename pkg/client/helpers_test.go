@@ -1,4 +1,4 @@
-package main
+package client
 
 import "testing"
 
@@ -37,7 +37,7 @@ var testTLSScheme = []struct {
 
 func TestValidURL(t *testing.T) {
 	for i, tt := range testURL {
-		actual := isValidURL(tt.in)
+		actual := IsValidURL(tt.in)
 		if actual != tt.expected {
 			t.Errorf("test: %d, isValidURL(%s): expected %t, actual %t", i+1, tt.in, tt.expected, actual)
 		}
@@ -46,7 +46,7 @@ func TestValidURL(t *testing.T) {
 
 func TestSplitHeaders(t *testing.T) {
 	for i, tt := range testHeader {
-		actual, _ := splitHeader(tt.in)
+		actual, _ := SplitHeader(tt.in)
 		if actual != tt.expected {
 			t.Errorf("test: %d, splitHeader(%s): expected %d, actual %d", i+1, tt.in, tt.expected, actual)
 		}

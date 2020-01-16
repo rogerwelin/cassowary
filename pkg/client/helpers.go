@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"net/url"
@@ -6,14 +6,14 @@ import (
 	"strings"
 )
 
-// Checks if string is valid URL
-func isValidURL(urlStr string) bool {
+// IsValidURL checks if string is valid URL
+func IsValidURL(urlStr string) bool {
 	u, err := url.Parse(urlStr)
 	return err == nil && u.Scheme != "" && u.Host != ""
 }
 
-// Split string on colon and return a slice
-func splitHeader(header string) (int, []string) {
+// SplitHeader splits string on colon and return a slice
+func SplitHeader(header string) (int, []string) {
 	splitted := strings.Split(header, ":")
 	return len(splitted), splitted
 
