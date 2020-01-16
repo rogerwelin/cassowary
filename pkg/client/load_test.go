@@ -26,6 +26,10 @@ func TestLoadCoordinate(t *testing.T) {
 		t.Error(err)
 	}
 
+	if metrics.BaseURL != srv.URL {
+		t.Errorf("Wanted %s but got %s", srv.URL, metrics.BaseURL)
+	}
+
 	if metrics.TotalRequests != 10 {
 		t.Errorf("Wanted %d but got %d", 1, metrics.TotalRequests)
 	}

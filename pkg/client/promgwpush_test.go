@@ -24,10 +24,6 @@ func TestPromGwPush(t *testing.T) {
 			}
 			lastPath = r.URL.EscapedPath()
 			w.Header().Set("Content-Type", `text/plain; charset=utf-8`)
-			if r.Method == http.MethodDelete {
-				w.WriteHeader(http.StatusAccepted)
-				return
-			}
 			w.WriteHeader(http.StatusOK)
 		}),
 	)
@@ -41,21 +37,20 @@ func TestPromGwPush(t *testing.T) {
 		TotalRequests:     100,
 		RequestsPerSecond: 100.10,
 		TCPStats: tcpStats{
-			TCPMean: 10.0,
+			TCPMean:   10.0,
 			TCPMedian: 10.0,
-			TCP95p: 10.0,
+			TCP95p:    10.0,
 		},
 		ProcessingStats: serverProcessingStats{
-			ServerProcessingMean: 1.0,
+			ServerProcessingMean:   1.0,
 			ServerProcessingMedian: 1.0,
-			ServerProcessing95p: 1.0,
+			ServerProcessing95p:    1.0,
 		},
-		
 	}
 
 	err := cass.PushPrometheusMetrics(metrics)
 	if err != nil {
-		t.Error("Got error but wanted OK")
+		t.Error(err)
 	}
 	if lastPath != "/metrics/job/cassowary_load_test/url/" {
 		t.Errorf("Wanted %s but got %s", "/metrics/job/cassowary_load_test/url/", lastPath)

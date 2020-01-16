@@ -52,7 +52,20 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 	return enc.Encode(metrics)
 }
 
-func validateRun(c *cli.Context) error {
+func runLoadTest(c *client.Cassowary) error {
+	metrics, err := c.Coordinate()
+	if err != nil {
+		return err
+	}
+	outPutResults(metrics)
+
+	if c.ExportMetrics {
+		return outPutJSON(c.ExportMetricsFile, metrics)
+	}
+	return nil
+}
+
+func validateCLI(c *cli.Context) error {
 
 	prometheusEnabled := false
 	var header []string
@@ -93,29 +106,10 @@ func validateRun(c *cli.Context) error {
 		ExportMetricsFile: c.String("json-metrics-file"),
 	}
 
-	metrics, err := cass.Coordinate()
-	if err != nil {
-		return err
-	}
-
-	outPutResults(metrics)
-
-	if cass.ExportMetrics {
-		return outPutJSON(cass.ExportMetricsFile, metrics)
-	}
-
-	if cass.PromExport {
-		err := cass.PushPrometheusMetrics(metrics)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return runLoadTest(cass)
 }
 
-func validateRunFile(c *cli.Context) error {
-
+func validateCLIFile(c *cli.Context) error {
 	prometheusEnabled := false
 	var header []string
 
@@ -151,16 +145,7 @@ func validateRunFile(c *cli.Context) error {
 		ExportMetricsFile: c.String("json-metrics-file"),
 	}
 
-	metrics, err := cass.Coordinate()
-	if err != nil {
-		return err
-	}
-	outPutResults(metrics)
-
-	if cass.ExportMetrics {
-		return outPutJSON(cass.ExportMetricsFile, metrics)
-	}
-	return nil
+	return runLoadTest(cass)
 }
 
 func runCLI(args []string) {
@@ -207,7 +192,7 @@ func runCLI(args []string) {
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
 			},
-			Action: validateRunFile,
+			Action: validateCLIFile,
 		},
 		{
 			Name:  "run",
@@ -245,7 +230,7 @@ func runCLI(args []string) {
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
 			},
-			Action: validateRun,
+			Action: validateCLI,
 		},
 	}
 
