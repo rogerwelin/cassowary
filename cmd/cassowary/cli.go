@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	version             = "dev"
 	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
 	errNotValidURL      = errors.New("Error: Not a valid URL. Must have the following format: http{s}://{host}")
@@ -155,6 +156,7 @@ func runCLI(args []string) {
 	app.UsageText = "cassowary [command] [command options] [arguments...]"
 	app.EnableBashCompletion = true
 	app.Usage = ""
+	app.Version = version
 	app.Commands = []cli.Command{
 		{
 			Name:  "run-file",
