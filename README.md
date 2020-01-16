@@ -29,6 +29,12 @@ Installation
 
 Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
 
+### Nix/NixOS
+
+Cassowary can be installed via the [Nix](https://nixos.org) package manager.
+```
+nix-env -iA cassowary
+```
 
 Running Cassowary  
 --------
