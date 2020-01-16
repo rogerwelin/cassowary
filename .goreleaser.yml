@@ -8,7 +8,7 @@ dist: go-dist
 builds:
 - env:
   - CGO_ENABLED=0
-  main: ./cmd/main.go
+  main: ./cmd/cassowary
   binary: cassowary
   goos:
     - linux
