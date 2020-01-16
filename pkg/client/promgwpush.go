@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -56,21 +56,22 @@ var (
 	})
 )
 
-func (c *cassowary) pushPrometheusMetrics(t1, t2, t3, s1, s2, s3, tf1, tf2, tf3, r1, r2, r3 float64) error {
-	promTCPConnMean.Set(t1)
-	promTCPConnMedian.Set(t2)
-	promTCPConn95P.Set(t3)
-	promServerProcessingMean.Set(s1)
-	promServerProcessingMedian.Set(s2)
-	promServerProcessing95p.Set(s3)
-	promContentTransferMean.Set(tf1)
-	promContentTransferMedian.Set(tf2)
-	promContentTransfer95p.Set(tf3)
-	promTotalRequests.Set(r1)
-	promFailedRequests.Set(r2)
-	promRequestPerSecond.Set(r3)
+// PushPrometheusMetrics exports metrics to a PushGateway
+func (c *Cassowary) PushPrometheusMetrics(metrics ResultMetrics) error {
+	promTCPConnMean.Set(metrics.TCPStats.TCPMean)
+	promTCPConnMedian.Set(metrics.TCPStats.TCPMedian)
+	promTCPConn95P.Set(metrics.TCPStats.TCP95p)
+	promServerProcessingMean.Set(metrics.ProcessingStats.ServerProcessingMean)
+	promServerProcessingMedian.Set(metrics.ProcessingStats.ServerProcessingMedian)
+	promServerProcessing95p.Set(metrics.ProcessingStats.ServerProcessing95p)
+	promContentTransferMean.Set(metrics.ContentStats.ContentTransferMean)
+	promContentTransferMedian.Set(metrics.ContentStats.ContentTransferMedian)
+	promContentTransfer95p.Set(metrics.ContentStats.ContentTransfer95p)
+	promTotalRequests.Set(float64(metrics.TotalRequests))
+	promFailedRequests.Set(float64(metrics.FailedRequests))
+	promRequestPerSecond.Set(metrics.RequestsPerSecond)
 
-	if err := push.New(c.promURL, "cassowary_load_test").
+	if err := push.New(c.PromURL, "cassowary_load_test").
 		Collector(promTCPConnMean).
 		Collector(promTCPConnMedian).
 		Collector(promTCPConn95P).
@@ -83,7 +84,7 @@ func (c *cassowary) pushPrometheusMetrics(t1, t2, t3, s1, s2, s3, tf1, tf2, tf3,
 		Collector(promTotalRequests).
 		Collector(promFailedRequests).
 		Collector(promRequestPerSecond).
-		Grouping("url", c.baseURL).
+		Grouping("url", c.BaseURL).
 		Push(); err != nil {
 		return err
 	}

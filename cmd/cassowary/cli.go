@@ -1,41 +1,72 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
+	"strconv"
 
-	"github.com/schollz/progressbar"
+	"github.com/fatih/color"
+	"github.com/rogerwelin/cassowary/pkg/client"
 	"github.com/urfave/cli"
 )
 
 var (
+	version             = "dev"
 	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
 	errNotValidURL      = errors.New("Error: Not a valid URL. Must have the following format: http{s}://{host}")
 	errNotValidHeader   = errors.New("Error: Not a valid header value. Did you forget : ?")
 )
 
-type cassowary struct {
-	fileMode         bool
-	isTLS            bool
-	inputFile        string
-	baseURL          string
-	concurrencyLevel int
-	requests         int
-	exportMetrics    bool
-	// The filename which json metrics should written
-	// to if `exportMetrics` is true, otherwise it defaults to "out.json".
-	exportMetricsFile string
-	promExport        bool
-	promURL           string
-	requestHeader     []string
-	client            *http.Client
-	bar               *progressbar.ProgressBar
+func outPutResults(metrics client.ResultMetrics) {
+	printf(summaryTable,
+		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCPMean)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCPMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCP95p)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessingMean)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessingMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessing95p)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransferMean)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransferMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransfer95p)),
+		color.CyanString(strconv.Itoa(metrics.TotalRequests)),
+		color.CyanString(strconv.Itoa(metrics.FailedRequests)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.DNSMedian)),
+		color.CyanString(fmt.Sprintf("%.2f", metrics.RequestsPerSecond)),
+	)
 }
 
-func validateRun(c *cli.Context) error {
+func outPutJSON(fileName string, metrics client.ResultMetrics) error {
+	if fileName == "" {
+		// default filename for json metrics output.
+		fileName = "out.json"
+	}
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	return enc.Encode(metrics)
+}
+
+func runLoadTest(c *client.Cassowary) error {
+	metrics, err := c.Coordinate()
+	if err != nil {
+		return err
+	}
+	outPutResults(metrics)
+
+	if c.ExportMetrics {
+		return outPutJSON(c.ExportMetricsFile, metrics)
+	}
+	return nil
+}
+
+func validateCLI(c *cli.Context) error {
 
 	prometheusEnabled := false
 	var header []string
@@ -48,7 +79,7 @@ func validateRun(c *cli.Context) error {
 		return errRequestNo
 	}
 
-	if isValidURL(c.String("url")) == false {
+	if client.IsValidURL(c.String("url")) == false {
 		return errNotValidURL
 	}
 
@@ -58,35 +89,28 @@ func validateRun(c *cli.Context) error {
 
 	if c.String("header") != "" {
 		length := 0
-		length, header = splitHeader(c.String("header"))
+		length, header = client.SplitHeader(c.String("header"))
 		if length != 2 {
 			return errNotValidHeader
 		}
 	}
 
-	cass := &cassowary{
-		fileMode:         false,
-		baseURL:          c.String("url"),
-		concurrencyLevel: c.Int("concurrency"),
-		requests:         c.Int("requests"),
-		requestHeader:    header,
-		promExport:       prometheusEnabled,
-		promURL:          c.String("prompushgwurl"),
-		exportMetrics:    c.Bool("json-metrics"),
-		// could have a single --json-output=file.json
-		// as it is not even documented (yet)
-		// but don't break existing usage.
-		// However, the author should make any necessary changes (even breaking ones)
-		// as soon as possible before huge amount of users.
-		exportMetricsFile: c.String("json-metrics-file"),
+	cass := &client.Cassowary{
+		FileMode:          false,
+		BaseURL:           c.String("url"),
+		ConcurrencyLevel:  c.Int("concurrency"),
+		Requests:          c.Int("requests"),
+		RequestHeader:     header,
+		PromExport:        prometheusEnabled,
+		PromURL:           c.String("prompushgwurl"),
+		ExportMetrics:     c.Bool("json-metrics"),
+		ExportMetricsFile: c.String("json-metrics-file"),
 	}
 
-	//fmt.Printf("%+v\n", cass)
-	return cass.coordinate()
+	return runLoadTest(cass)
 }
 
-func validateRunFile(c *cli.Context) error {
-
+func validateCLIFile(c *cli.Context) error {
 	prometheusEnabled := false
 	var header []string
 
@@ -94,7 +118,7 @@ func validateRunFile(c *cli.Context) error {
 		return errConcurrencyLevel
 	}
 
-	if isValidURL(c.String("url")) == false {
+	if client.IsValidURL(c.String("url")) == false {
 		return errNotValidURL
 	}
 
@@ -104,34 +128,35 @@ func validateRunFile(c *cli.Context) error {
 
 	if c.String("header") != "" {
 		length := 0
-		length, header = splitHeader(c.String("header"))
+		length, header = client.SplitHeader(c.String("header"))
 		if length != 2 {
 			return errNotValidHeader
 		}
 	}
 
-	cass := &cassowary{
-		fileMode:          true,
-		inputFile:         c.String("file"),
-		baseURL:           c.String("url"),
-		concurrencyLevel:  c.Int("concurrency"),
-		requestHeader:     header,
-		promExport:        prometheusEnabled,
-		promURL:           c.String("prompushgwurl"),
-		exportMetrics:     c.Bool("json-metrics"),
-		exportMetricsFile: c.String("json-metrics-file"),
+	cass := &client.Cassowary{
+		FileMode:          true,
+		InputFile:         c.String("file"),
+		BaseURL:           c.String("url"),
+		ConcurrencyLevel:  c.Int("concurrency"),
+		RequestHeader:     header,
+		PromExport:        prometheusEnabled,
+		PromURL:           c.String("prompushgwurl"),
+		ExportMetrics:     c.Bool("json-metrics"),
+		ExportMetricsFile: c.String("json-metrics-file"),
 	}
 
-	return cass.coordinate()
+	return runLoadTest(cass)
 }
 
 func runCLI(args []string) {
 	app := cli.NewApp()
-	app.Name = "cassowary - 鹤鸵"
+	app.Name = "cassowary - 學名"
 	app.HelpName = "cassowary"
 	app.UsageText = "cassowary [command] [command options] [arguments...]"
 	app.EnableBashCompletion = true
 	app.Usage = ""
+	app.Version = version
 	app.Commands = []cli.Command{
 		{
 			Name:  "run-file",
@@ -169,7 +194,7 @@ func runCLI(args []string) {
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
 			},
-			Action: validateRunFile,
+			Action: validateCLIFile,
 		},
 		{
 			Name:  "run",
@@ -207,7 +232,7 @@ func runCLI(args []string) {
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
 			},
-			Action: validateRun,
+			Action: validateCLI,
 		},
 	}
 

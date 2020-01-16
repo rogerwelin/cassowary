@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptrace"
-	"strconv"
 	"sync"
 	"time"
 
@@ -26,26 +25,26 @@ type durationMetrics struct {
 	StatusCode       int
 }
 
-func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
+func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
 	for URLitem := range workerChan {
 
 		var request *http.Request
 		var err error
 
-		if c.fileMode {
-			request, err = http.NewRequest("GET", c.baseURL+URLitem, nil)
+		if c.FileMode {
+			request, err = http.NewRequest("GET", c.BaseURL+URLitem, nil)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			request, err = http.NewRequest("GET", c.baseURL, nil)
+			request, err = http.NewRequest("GET", c.BaseURL, nil)
 			if err != nil {
 				panic(err)
 			}
 		}
 
-		if len(c.requestHeader) == 2 {
-			request.Header.Add(c.requestHeader[0], c.requestHeader[1])
+		if len(c.RequestHeader) == 2 {
+			request.Header.Add(c.RequestHeader[0], c.RequestHeader[1])
 		}
 
 		var t0, t1, t2, t3, t4, t5, t6 time.Time
@@ -73,7 +72,7 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		}
 
 		request = request.WithContext(httptrace.WithClientTrace(context.Background(), trace))
-		resp, err := c.client.Do(request)
+		resp, err := c.Client.Do(request)
 		if err != nil {
 			panic(err)
 		}
@@ -84,7 +83,10 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			}
 			resp.Body.Close()
 		}
-		c.bar.Add(1)
+
+		if c.DisableTerminalOutput != true {
+			c.Bar.Add(1)
+		}
 
 		// Body fully read here
 		t7 := time.Now()
@@ -101,7 +103,7 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			StatusCode:       resp.StatusCode,
 		}
 
-		if c.isTLS {
+		if c.IsTLS {
 			out.TCPConn = float64(t2.Sub(t1) / time.Millisecond)
 			out.TLSHandshake = float64(t6.Sub(t5) / time.Millisecond) // tls handshake
 		} else {
@@ -112,7 +114,8 @@ func (c *cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 	}
 }
 
-func (c *cassowary) coordinate() error {
+// Coordinate bootstraps the load test based on values in Cassowary struct
+func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	var dnsDur []float64
 	var tcpDur []float64
 	var tlsDur []float64
@@ -120,15 +123,15 @@ func (c *cassowary) coordinate() error {
 	var transferDur []float64
 	var statusCodes []int
 
-	tls, err := isTLS(c.baseURL)
+	tls, err := isTLS(c.BaseURL)
 	if err != nil {
-		return err
+		return ResultMetrics{}, err
 	}
-	c.isTLS = tls
+	c.IsTLS = tls
 
 	var urlSuffixes []string
 
-	c.client = &http.Client{
+	c.Client = &http.Client{
 		Timeout: time.Second * 5,
 		Transport: &http.Transport{
 			MaxIdleConns:        300,
@@ -138,41 +141,42 @@ func (c *cassowary) coordinate() error {
 		},
 	}
 
-	c.bar = progressbar.New(c.requests)
+	c.Bar = progressbar.New(c.Requests)
 
-	if c.fileMode {
-		urlSuffixes, err = readFile(c.inputFile)
+	if c.FileMode {
+		urlSuffixes, err = readFile(c.InputFile)
 		if err != nil {
-			return err
+			return ResultMetrics{}, err
 		}
-		c.requests = len(urlSuffixes)
-		c.bar = progressbar.New(c.requests)
-		//fmt.Println(urlSuffixes)
+		c.Requests = len(urlSuffixes)
+		c.Bar = progressbar.New(c.Requests)
 	}
 
-	col := color.New(color.FgCyan).Add(color.Underline)
-	col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.requests, c.concurrencyLevel)
+	if c.DisableTerminalOutput != true {
+		col := color.New(color.FgCyan).Add(color.Underline)
+		col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.Requests, c.ConcurrencyLevel)
+	}
 
 	var wg sync.WaitGroup
-	channel := make(chan durationMetrics, c.requests)
+	channel := make(chan durationMetrics, c.Requests)
 	workerChan := make(chan string)
 
-	wg.Add(c.concurrencyLevel)
+	wg.Add(c.ConcurrencyLevel)
 	start := time.Now()
 
-	for i := 0; i < c.concurrencyLevel; i++ {
+	for i := 0; i < c.ConcurrencyLevel; i++ {
 		go func() {
 			c.runLoadTest(channel, workerChan)
 			wg.Done()
 		}()
 	}
 
-	if c.fileMode {
+	if c.FileMode {
 		for _, line := range urlSuffixes {
 			workerChan <- line
 		}
 	} else {
-		for i := 0; i < c.requests; i++ {
+		for i := 0; i < c.Requests; i++ {
 			workerChan <- "a"
 		}
 	}
@@ -182,7 +186,9 @@ func (c *cassowary) coordinate() error {
 	close(channel)
 
 	end := time.Since(start)
-	fmt.Println(end)
+	if c.DisableTerminalOutput != true {
+		fmt.Println(end)
+	}
 
 	for item := range channel {
 		if item.DNSLookup != 0 {
@@ -191,7 +197,7 @@ func (c *cassowary) coordinate() error {
 		if item.TCPConn < 1000 {
 			tcpDur = append(tcpDur, item.TCPConn)
 		}
-		if c.isTLS {
+		if c.IsTLS {
 			tlsDur = append(tlsDur, item.TLSHandshake)
 		}
 		serverDur = append(serverDur, item.ServerProcessing)
@@ -218,53 +224,32 @@ func (c *cassowary) coordinate() error {
 	transfer95 := calc95Percentile(transferDur)
 
 	// Request per second
-	reqS := requestsPerSecond(c.requests, end)
+	reqS := requestsPerSecond(c.Requests, end)
 
 	// Failed Requests
 	failedR := failedRequests(statusCodes)
 
-	printf(summaryTable,
-		color.CyanString(fmt.Sprintf("%.2f", tcpMean)),
-		color.CyanString(fmt.Sprintf("%.2f", tcpMedian)),
-		color.CyanString(tcp95),
-		color.CyanString(fmt.Sprintf("%.2f", serverMean)),
-		color.CyanString(fmt.Sprintf("%.2f", serverMedian)),
-		color.CyanString(server95),
-		color.CyanString(fmt.Sprintf("%.2f", transferMean)),
-		color.CyanString(fmt.Sprintf("%.2f", transferMedian)),
-		color.CyanString(transfer95),
-		color.CyanString(strconv.Itoa(c.requests)),
-		color.CyanString(strconv.Itoa(failedR)),
-		color.CyanString(fmt.Sprintf("%.2f", dnsMedian)),
-		color.CyanString(reqS),
-	)
-
-	if c.promExport == true {
-		err := c.pushPrometheusMetrics(
-			tcpMean,
-			tcpMedian,
-			stringToFloat(tcp95),
-			serverMean,
-			serverMedian,
-			stringToFloat(server95),
-			transferMean,
-			transferMedian,
-			stringToFloat(transfer95),
-			float64(c.requests),
-			float64(failedR),
-			stringToFloat(reqS),
-		)
-		if err != nil {
-			return err
-		}
+	outPut := ResultMetrics{
+		BaseURL:           c.BaseURL,
+		FailedRequests:    failedR,
+		RequestsPerSecond: reqS,
+		TotalRequests:     c.Requests,
+		DNSMedian:         dnsMedian,
+		TCPStats: tcpStats{
+			TCPMean:   tcpMean,
+			TCPMedian: tcpMedian,
+			TCP95p:    stringToFloat(tcp95),
+		},
+		ProcessingStats: serverProcessingStats{
+			ServerProcessingMean:   serverMean,
+			ServerProcessingMedian: serverMedian,
+			ServerProcessing95p:    stringToFloat(server95),
+		},
+		ContentStats: contentTransfer{
+			ContentTransferMean:   transferMean,
+			ContentTransferMedian: transferMedian,
+			ContentTransfer95p:    stringToFloat(transfer95),
+		},
 	}
-
-	if c.exportMetrics {
-		return c.outPutJSON(failedR, stringToFloat(reqS), tcpMean, tcpMedian, tcp95, serverMean, serverMedian, server95, transferMean, transferMedian, transfer95)
-	}
-
-	//fmt.Println(tcpDur)
-	//fmt.Println(dnsDur)
-	//fmt.Println(tlsDur)
-	return nil
+	return outPut, nil
 }

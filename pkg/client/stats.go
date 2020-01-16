@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"math"
@@ -70,9 +70,10 @@ func calc95Percentile(nums []float64) string {
 	return strconv.FormatFloat(newSlice[0], 'f', 0, 64)
 }
 
-func requestsPerSecond(request int, duration time.Duration) string {
+func requestsPerSecond(request int, duration time.Duration) float64 {
 	convertedDuration := float64(duration) / float64(time.Second)
-	return strconv.FormatFloat(float64(request)/convertedDuration, 'f', 2, 64)
+	toS := strconv.FormatFloat(float64(request)/convertedDuration, 'f', 2, 64)
+	return stringToFloat(toS)
 }
 
 func failedRequests(slice []int) int {

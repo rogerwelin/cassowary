@@ -20,6 +20,7 @@ Features
 - **Flexible metrics**: Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
 - **Configurable**: Able to pass in arbitrary HTTP headers
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
+- **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
@@ -41,7 +42,7 @@ Running Cassowary
 
 Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
 
-```
+```bash
 $ ./cassowary run -u http://www.example.com -c 10 -n 100
 
 Starting Load Test with 100 requests using 10 concurrent users
@@ -62,7 +63,7 @@ Summary:
 
 Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified):
 
-```
+```bash
 $ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
 
 Starting Load Test with 3925 requests using 10 concurrent users
@@ -83,8 +84,8 @@ Summary:
 
 Example exporting **cassowary** json metrics to a file:
 
-```sh
-$ ./cassowary run --json-metrics --json-metrics-file=metrics.json -u http://localhost:5000 -c 125 -n 100000
+```bash
+$ ./cassowary run --json-metrics --json-metrics-file=metrics.json -u http://localhost:8000 -c 125 -n 100000
 
 Starting Load Test with 100000 requests using 125 concurrent users
 
@@ -103,6 +104,63 @@ Summary:
 ```
 
 > If `json-metrics-file` flag is missing then the default filename is `out.json`.
+
+
+Example adding an HTTP header when running **cassowary**
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 -H 'Host: www.example.com'
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
+**Importing cassowary as a module/library**  
+
+Cassowary can be imported and used as a module in your Go app. Start by fetching the dependency by using go mod:
+
+```bash
+$ go mod init test && go get github.com/rogerwelin/cassowary/pkg/client
+```
+
+And below show a simple example on how to trigger a load test from your code and printing the results:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/rogerwelin/cassowary/pkg/client"
+)
+
+func main() {
+	cass := &client.Cassowary{
+		BaseURL:               "http://www.example.com",
+		ConcurrencyLevel:      1,
+		Requests:              10,
+		DisableTerminalOutput: true,
+	}
+	metrics, err := cass.Coordinate()
+	if err != nil {
+		panic(err)
+	}
+
+        // print results
+	fmt.Printf("%+v\n", metrics)
+
+        // or print as json
+	jsonMetrics, err := json.Marshal(metrics)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(jsonMetrics))
+}
+```
+
 
 Project Status & Contribute  
 --------
