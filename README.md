@@ -108,6 +108,17 @@ Summary:
 > If `json-metrics-file` flag is missing then the default filename is `out.json`.
 
 
+Example exporting **cassowary** metrics to Prometheus by supplying an Prometheus PushGatway URL:
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 125 -n 100000 -p http://pushgatway:9091
+
+Starting Load Test with 100000 requests using 125 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 Example adding an HTTP header when running **cassowary**
 
 ```bash
