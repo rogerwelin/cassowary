@@ -14,6 +14,15 @@
 
 ---
 
+Toc
+----
+
+- [Features](#features)
+- [Installation](#installation)
+- [Running Cassowary](#running-cassowary)
+- [Contributing](#contributing)
+
+
 Features  
 --------
 
@@ -25,6 +34,7 @@ Features
 - **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
 
 <img src="https://i.imgur.com/geJykYH.gif" />
+
 
 
 Installation  
@@ -187,7 +197,7 @@ func main() {
 ```
 
 
-Project Status & Contribute  
+Contributing
 --------
 
-Feature-wise I'm quite happy with `cassowary` and hence new features will only be added on a feature request and bug basis. To request a feature create a new issue with the label `feature-request`. For bugs use the label `bug`.
+Contributions are welcome! To request a feature create a new issue with the label `feature-request`. Find a bug? Please add an issue with the label `bugs`. Pull requests are also welcomed but please add an issue on the requested feature first (unless it's a simple bug fix or readme change)
