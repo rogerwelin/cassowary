@@ -132,7 +132,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	var urlSuffixes []string
 
 	c.Client = &http.Client{
-		Timeout: time.Second * 5,
+		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
 			MaxIdleConns:        300,
 			MaxIdleConnsPerHost: 300,
