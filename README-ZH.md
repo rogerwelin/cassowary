@@ -9,53 +9,45 @@
   <a href="https://gocover.io/github.com/rogerwelin/cassowary/pkg/client"><img src="https://gocover.io/_badge/github.com/rogerwelin/cassowary/pkg/client" alt="Coverage"></a>
 </p>
 
-
-English | [中文](README-ZH.md)
-
-
-**Cassowary** is a modern HTTP/S, intuitive & cross-platform load testing tool built in Go for developers, testers and sysadmins. Cassowary draws inspiration from awesome projects like k6, ab & httpstat.
+**Cassowary** 是一个最新的跨平台HTTP/S负载测试工。我使用了Go编辑Cassowary，希望Developer, tester 以及sysadmins都可以便捷的进行负载测试。Cassowary受到了很多经典的开源项目的启发，比如k6, ab和httestat。
 
 ---
 
-Toc
+
+目录
 ----
+- [功能](#功能)
+- [安装](#安装)
+- [使用](#使用)
+- [反馈](#反馈)
 
-- [Features](#features)
-- [Installation](#installation)
-- [Running Cassowary](#running-cassowary)
-- [Contributing](#contributing)
 
-
-Features  
+功能
 --------
-
-- **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)
-- **CI Friendly**: Well-suited to be part of a CI pipeline step
-- **Flexible metrics**: Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
-- **Configurable**: Able to pass in arbitrary HTTP headers
-- **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
-- **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
+- 两种测试模式:标准和自定义。在自定义模式下可以选择URL路径
+- CI友好
+- 灵活的算法: 可以向Prometheus PushGateway直接发送算法，也可以以JSON文件的形式发送算法
+- 灵活调节:可以自由选择使用哪种HTTP头字段
+- 跨平台: 一个二进制文件可同时支持Linux，Mac OSX和Windows
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
 
-
-Installation  
+安装
 --------
 
-Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
+从GitHub Releases page下载二进制文件。可以选择把Cassowary二进制文件放在PATH里，这样在任何页面写都可以运行Cassowary。
+
 
 ### Nix/NixOS
 
-Cassowary can be installed via the [Nix](https://nixos.org) package manager.
-```
-nix-env -iA cassowary
-```
+Cassowary可以安装在Nix OS上。
 
-Running Cassowary  
+
+使用
 --------
 
-Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
+示例:10个用户同时向www.example.com 发送100个访问
 
 ```bash
 $ ./cassowary run -u http://www.example.com -c 10 -n 100
@@ -76,7 +68,7 @@ Summary:
  Req/s...........................: 79.57
 ```
 
-Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified):
+示例:访问外部文件指定的URL路径(外部文件也可以是http路径的)
 
 ```bash
 $ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
@@ -97,31 +89,21 @@ Summary:
  Req/s...........................: 6547.48
 ```
 
-Example exporting **cassowary** json metrics to a file:
+示例:导出Cassowary的Json算法
 
 ```bash
 $ ./cassowary run --json-metrics --json-metrics-file=metrics.json -u http://localhost:8000 -c 125 -n 100000
 
 Starting Load Test with 100000 requests using 125 concurrent users
 
- 100% |████████████████████████████████████████| [0s:0s]            984.9862ms
+[ omitted for brevity ]
 
-
- TCP Connect.....................: Avg/mean=-0.18ms     Median=0.00ms   p(95)=1ms
- Server Processing...............: Avg/mean=0.16ms      Median=0.00ms   p(95)=1ms
- Content Transfer................: Avg/mean=0.01ms      Median=0.00ms   p(95)=0ms
-
-Summary:
- Total Req.......................: 100000
- Failed Req......................: 0
- DNS Lookup......................: 2.00ms
- Req/s...........................: 101524.27
 ```
 
-> If `json-metrics-file` flag is missing then the default filename is `out.json`.
+> 如果没有指定Json算法的导出文件名，系统会使用默认文件名out.json.
 
 
-Example exporting **cassowary** metrics to Prometheus by supplying an Prometheus PushGatway URL:
+示例:指定一个Prometheus Pushgateway URL，把Cassowary的Json算法导出到Prometheus
 
 ```bash
 $ ./cassowary run -u http://localhost:8000 -c 125 -n 100000 -p http://pushgatway:9091
@@ -132,7 +114,8 @@ Starting Load Test with 100000 requests using 125 concurrent users
 
 ```
 
-Example adding an HTTP header when running **cassowary**
+
+示例:添加HTTP头字段
 
 ```bash
 $ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 -H 'Host: www.example.com'
@@ -143,7 +126,8 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
-Example disabling http keep-alive (by default keep-alive are enabled):
+
+示例:关闭http-keep-alive(http-keep-alive在默认下是激活的)
 
 ```bash
 $ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --disable-keep-alive
@@ -155,15 +139,15 @@ Starting Load Test with 1000 requests using 10 concurrent users
 ```
 
 
-**Importing cassowary as a module/library**  
+**以模块或者library导入Cassowary**  
 
-Cassowary can be imported and used as a module in your Go app. Start by fetching the dependency by using go mod:
+Cassowary可以以模块的形式倒入/使用在你的Go程序。我们从使用go mod下载依赖关系开始
 
 ```bash
 $ go mod init test && go get github.com/rogerwelin/cassowary/pkg/client
 ```
 
-And below show a simple example on how to trigger a load test from your code and printing the results:
+以下是一个简单示例:如何激活一个load test并且显示结果
 
 ```go
 package main
@@ -200,7 +184,8 @@ func main() {
 ```
 
 
-Contributing
+反馈
 --------
 
-Contributions are welcome! To request a feature create a new issue with the label `feature-request`. Find a bug? Please add an issue with the label `bugs`. Pull requests are also welcomed but please add an issue on the requested feature first (unless it's a simple bug fix or readme change)
+非常欢迎收到各种意见和建议！如果你觉得有某项功能可以更加完善，可以在Issue下发帖，最好能使用feature-request标签。如果你找到一个bug,一定要在issue下发帖告诉我，使用bugs标签。也非常欢迎Pull requests，一样的在issue下发帖，使用feature-request标签就好。
+
