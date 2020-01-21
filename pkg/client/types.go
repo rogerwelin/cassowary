@@ -23,6 +23,7 @@ type Cassowary struct {
 	DisableKeepAlive      bool
 	Client                *http.Client
 	Bar                   *progressbar.ProgressBar
+	Timeout               int
 }
 
 // ResultMetrics are the aggregated metrics after the load test

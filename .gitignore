@@ -1,3 +1,6 @@
 apa*
 out.json
 go-dist
+.theia/
+/.theia
+.theia/settings.json

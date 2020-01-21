@@ -106,6 +106,7 @@ func validateCLI(c *cli.Context) error {
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
+		Timeout:           c.Int("timeout"),
 	}
 
 	return runLoadTest(cass)
@@ -146,6 +147,7 @@ func validateCLIFile(c *cli.Context) error {
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("diable-keep-alive"),
+		Timeout:           c.Int("timeout"),
 	}
 
 	return runLoadTest(cass)
@@ -173,6 +175,11 @@ func runCLI(args []string) {
 					Name:     "c, concurrency",
 					Usage:    "number of concurrent users",
 					Required: true,
+				},
+				cli.IntFlag{
+					Name:  "t, timeout",
+					Usage: "http client timeout",
+					Value: 5,
 				},
 				cli.StringFlag{
 					Name:     "f, file",
@@ -220,6 +227,11 @@ func runCLI(args []string) {
 					Name:     "n, requests",
 					Usage:    "number of requests to perform",
 					Required: true,
+				},
+				cli.IntFlag{
+					Name:  "t, timeout",
+					Usage: "http client timeout",
+					Value: 5,
 				},
 				cli.StringFlag{
 					Name:  "p, prompushgwurl",
