@@ -148,6 +148,7 @@ func validateCLIFile(c *cli.Context) error {
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("diable-keep-alive"),
 		Timeout:           c.Int("timeout"),
+		Requests:          c.Int("requests"),
 	}
 
 	return runLoadTest(cass)
@@ -175,6 +176,10 @@ func runCLI(args []string) {
 					Name:     "c, concurrency",
 					Usage:    "number of concurrent users",
 					Required: true,
+				},
+				cli.IntFlag{
+					Name:  "n, requests",
+					Usage: "number of requests to perform",
 				},
 				cli.IntFlag{
 					Name:  "t, timeout",
