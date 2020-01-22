@@ -76,10 +76,10 @@ Summary:
  Req/s...........................: 79.57
 ```
 
-Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified):
+Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified or which can also be generated from given requests number):
 
 ```bash
-$ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
+$ ./cassowary run-file -u http://localhost:8000 -c 10 -n 100 -f urlpath.txt
 
 Starting Load Test with 3925 requests using 10 concurrent users
 

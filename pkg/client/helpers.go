@@ -44,3 +44,15 @@ func stringToFloat(input string) float64 {
 	}
 	return 0.00
 }
+
+func generateSuffixes(src []string, length int) []string {
+	if len(src) > length {
+		return src
+	}
+	var urls []string
+	srcLength := len(src)
+	for i := 0; i < length; i++ {
+		urls = append(urls, src[i%srcLength])
+	}
+	return urls
+}
