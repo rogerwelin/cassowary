@@ -54,7 +54,7 @@ nix-env -iA cassowary
 
 ### CentOS/RHEL (RPM)
 
-If you want to roll out your own RPM you can use the spec file in dist/rpm/cassowary.spec to build an RPM package
+If you want to roll out your own RPM you can use the spec file [cassowary.spec](https://github.com/rogerwelin/cassowary/blob/master/dist/rpm/cassowary.spec) to build an RPM package
 
 
 
