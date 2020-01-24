@@ -149,8 +149,14 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		if err != nil {
 			return ResultMetrics{}, err
 		}
-		urlSuffixes = generateSuffixes(urlSuffixes, c.Requests)
-		c.Bar = progressbar.New(c.Requests)
+		if c.Requests > len(urlSuffixes) {
+			urlSuffixes = generateSuffixes(urlSuffixes, c.Requests)
+			c.Requests = len(urlSuffixes)
+			c.Bar = progressbar.New(c.Requests)
+		} else {
+			c.Requests = len(urlSuffixes)
+			c.Bar = progressbar.New(c.Requests)
+		}
 	}
 
 	if c.DisableTerminalOutput != true {
