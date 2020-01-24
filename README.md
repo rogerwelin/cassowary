@@ -76,12 +76,12 @@ Summary:
  Req/s...........................: 79.57
 ```
 
-Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified or which can also be generated from given requests number):
+Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified). By default cassowary will make one request per path specified in the file. However with the -n flag you can also specify how many request you want cassowary to generate against those URL paths. Example:
 
 ```bash
 $ ./cassowary run-file -u http://localhost:8000 -c 10 -n 100 -f urlpath.txt
 
-Starting Load Test with 3925 requests using 10 concurrent users
+Starting Load Test with 100 requests using 10 concurrent users
 
  100% |████████████████████████████████████████| [0s:0s]            599.467161ms
 
