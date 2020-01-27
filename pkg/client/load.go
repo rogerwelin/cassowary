@@ -134,11 +134,11 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	c.Client = &http.Client{
 		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
-			MaxIdleConns:        300,
-			MaxIdleConnsPerHost: 300,
-			MaxConnsPerHost:     300,
-			DisableCompression:  false,
-			DisableKeepAlives:   c.DisableKeepAlive,
+			//MaxIdleConns:        300,
+			MaxIdleConnsPerHost: 10000,
+			//MaxConnsPerHost:     300,
+			DisableCompression: false,
+			DisableKeepAlives:  c.DisableKeepAlive,
 		},
 	}
 

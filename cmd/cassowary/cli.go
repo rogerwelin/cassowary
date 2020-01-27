@@ -233,6 +233,14 @@ func runCLI(args []string) {
 					Usage:    "number of requests to perform",
 					Required: true,
 				},
+				cli.StringFlag{
+					Name:  "postfile",
+					Usage: "File containing data to POST (content type will default to application/json)",
+				},
+				cli.StringFlag{
+					Name:  "putfile",
+					Usage: "File containig data to PUT (content type will default to application/json)",
+				},
 				cli.IntFlag{
 					Name:  "t, timeout",
 					Usage: "http client timeout",
