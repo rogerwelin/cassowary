@@ -142,8 +142,6 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		},
 	}
 
-	c.Bar = progressbar.New(c.Requests)
-
 	if c.FileMode {
 		urlSuffixes, err = readFile(c.InputFile)
 		if err != nil {
@@ -151,13 +149,11 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		}
 		if c.Requests > len(urlSuffixes) {
 			urlSuffixes = generateSuffixes(urlSuffixes, c.Requests)
-			c.Requests = len(urlSuffixes)
-			c.Bar = progressbar.New(c.Requests)
-		} else {
-			c.Requests = len(urlSuffixes)
-			c.Bar = progressbar.New(c.Requests)
 		}
+		c.Requests = len(urlSuffixes)
 	}
+
+	c.Bar = progressbar.New(c.Requests)
 
 	if c.DisableTerminalOutput != true {
 		col := color.New(color.FgCyan).Add(color.Underline)
