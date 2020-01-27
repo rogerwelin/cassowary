@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -66,10 +67,20 @@ func runLoadTest(c *client.Cassowary) error {
 	return nil
 }
 
+func readFile(file string) ([]byte, error) {
+	fileContent, err := ioutil.ReadFile(file)
+	if err != nil {
+		return []byte{}, err
+	}
+	return fileContent, nil
+}
+
 func validateCLI(c *cli.Context) error {
 
 	prometheusEnabled := false
 	var header []string
+	var httpMethod string
+	var data []byte
 
 	if c.Int("concurrency") == 0 {
 		return errConcurrencyLevel
@@ -95,6 +106,24 @@ func validateCLI(c *cli.Context) error {
 		}
 	}
 
+	if c.String("postfile") != "" {
+		httpMethod = "POST"
+		fileData, err := readFile(c.String("postfile"))
+		if err != nil {
+			return err
+		}
+		data = fileData
+	} else if c.String("putfile") != "" {
+		httpMethod = "PUT"
+		fileData, err := readFile(c.String("putfile"))
+		if err != nil {
+			return err
+		}
+		data = fileData
+	} else {
+		httpMethod = "GET"
+	}
+
 	cass := &client.Cassowary{
 		FileMode:          false,
 		BaseURL:           c.String("url"),
@@ -107,6 +136,8 @@ func validateCLI(c *cli.Context) error {
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 		Timeout:           c.Int("timeout"),
+		HTTPMethod:        httpMethod,
+		Data:              data,
 	}
 
 	return runLoadTest(cass)
@@ -149,6 +180,7 @@ func validateCLIFile(c *cli.Context) error {
 		DisableKeepAlive:  c.Bool("diable-keep-alive"),
 		Timeout:           c.Int("timeout"),
 		Requests:          c.Int("requests"),
+		HTTPMethod:        "GET",
 	}
 
 	return runLoadTest(cass)
@@ -197,7 +229,7 @@ func runCLI(args []string) {
 				},
 				cli.StringFlag{
 					Name:  "H, header",
-					Usage: "add Arbitrary header line, eg. 'Host: www.example.com'",
+					Usage: "add arbitrary header, eg. 'Host: www.example.com'",
 				},
 				cli.BoolFlag{
 					Name:  "F, json-metrics",
@@ -209,7 +241,7 @@ func runCLI(args []string) {
 				},
 				cli.BoolFlag{
 					Name:  "disable-keep-alive",
-					Usage: "Use this flag to not use http keep-alive",
+					Usage: "use this flag to disable http keep-alive",
 				},
 			},
 			Action: validateCLIFile,
@@ -233,14 +265,6 @@ func runCLI(args []string) {
 					Usage:    "number of requests to perform",
 					Required: true,
 				},
-				cli.StringFlag{
-					Name:  "postfile",
-					Usage: "File containing data to POST (content type will default to application/json)",
-				},
-				cli.StringFlag{
-					Name:  "putfile",
-					Usage: "File containig data to PUT (content type will default to application/json)",
-				},
 				cli.IntFlag{
 					Name:  "t, timeout",
 					Usage: "http client timeout",
@@ -252,11 +276,19 @@ func runCLI(args []string) {
 				},
 				cli.StringFlag{
 					Name:  "H, header",
-					Usage: "add Arbitrary header line, eg. 'Host: www.example.com'",
+					Usage: "add arbitrary header, eg. 'Host: www.example.com'",
 				},
 				cli.BoolFlag{
 					Name:  "F, json-metrics",
 					Usage: "outputs metrics to a json file by setting flag to true",
+				},
+				cli.StringFlag{
+					Name:  "postfile",
+					Usage: "file containing data to POST (content type will default to application/json)",
+				},
+				cli.StringFlag{
+					Name:  "putfile",
+					Usage: "file containig data to PUT (content type will default to application/json)",
 				},
 				cli.StringFlag{
 					Name:  "json-metrics-file",
@@ -264,7 +296,7 @@ func runCLI(args []string) {
 				},
 				cli.BoolFlag{
 					Name:  "disable-keep-alive",
-					Usage: "Use this flag to not use http keep-alive",
+					Usage: "use this flag to disable http keep-alive",
 				},
 			},
 			Action: validateCLI,

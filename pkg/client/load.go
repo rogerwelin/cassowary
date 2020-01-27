@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -37,9 +38,24 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 				panic(err)
 			}
 		} else {
-			request, err = http.NewRequest("GET", c.BaseURL, nil)
-			if err != nil {
-				panic(err)
+			switch c.HTTPMethod {
+			case "POST":
+				request, err = http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(c.Data))
+				request.Header.Set("Content-Type", "application/json")
+				if err != nil {
+					panic(err)
+				}
+			case "PUT":
+				request, err = http.NewRequest("PUT", c.BaseURL, bytes.NewBuffer(c.Data))
+				request.Header.Set("Content-Type", "application/json")
+				if err != nil {
+					panic(err)
+				}
+			default:
+				request, err = http.NewRequest("GET", c.BaseURL, nil)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 
