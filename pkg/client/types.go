@@ -24,6 +24,8 @@ type Cassowary struct {
 	Client                *http.Client
 	Bar                   *progressbar.ProgressBar
 	Timeout               int
+	HTTPMethod            string
+	Data                  []byte
 }
 
 // ResultMetrics are the aggregated metrics after the load test

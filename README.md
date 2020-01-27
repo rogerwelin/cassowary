@@ -32,7 +32,8 @@ Features
 - **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)
 - **CI Friendly**: Well-suited to be part of a CI pipeline step
 - **Flexible metrics**: Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
-- **Configurable**: Able to pass in arbitrary HTTP headers
+- **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client
+- **Supports GET, POST & PUT** - POST and PUT data can be defined in a file
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 - **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
 
@@ -146,6 +147,17 @@ Starting Load Test with 100000 requests using 125 concurrent users
 
 ```
 
+Example hitting a POST endpoint where POST json data is defined in a file:
+
+```bash
+$ ./cassowary run -u http://localhost:8000/add-user -c 10 -n 1000 --post-file user.json
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 Example adding an HTTP header when running **cassowary**
 
 ```bash
@@ -213,6 +225,10 @@ func main() {
 }
 ```
 
+Versioning
+--------
+
+Cassowary follows semantic versioning. The public library (pkg/client) may break backwards compability until it hits a stable v1.0.0 release.
 
 Contributing
 --------
