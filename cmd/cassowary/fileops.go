@@ -1,8 +1,9 @@
-package client
+package main
 
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,7 +37,15 @@ func downloadPath(url string) (string, error) {
 	return binDir + "/load.txt", nil
 }
 
-func readFile(filePath string) ([]string, error) {
+func readFile(file string) ([]byte, error) {
+	fileContent, err := ioutil.ReadFile(file)
+	if err != nil {
+		return []byte{}, err
+	}
+	return fileContent, nil
+}
+
+func readLocalRemoteFile(filePath string) ([]string, error) {
 	var urlLines []string
 	var err error
 

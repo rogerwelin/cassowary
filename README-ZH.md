@@ -153,6 +153,7 @@ $ go mod init test && go get github.com/rogerwelin/cassowary/pkg/client
 package main
 
 import (
+        "encoding/json"
 	"fmt"
 
 	"github.com/rogerwelin/cassowary/pkg/client"

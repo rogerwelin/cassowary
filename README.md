@@ -195,6 +195,7 @@ And below show a simple example on how to trigger a load test from your code and
 package main
 
 import (
+        "encoding/json"
 	"fmt"
 
 	"github.com/rogerwelin/cassowary/pkg/client"
@@ -224,6 +225,9 @@ func main() {
 	fmt.Println(string(jsonMetrics))
 }
 ```
+
+More library examples [can be found here](docs/LIBRARY.md)
+
 
 Versioning
 --------

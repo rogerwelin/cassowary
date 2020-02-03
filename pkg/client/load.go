@@ -145,28 +145,20 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	}
 	c.IsTLS = tls
 
-	var urlSuffixes []string
-
 	c.Client = &http.Client{
 		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
-			//MaxIdleConns:        300,
 			MaxIdleConnsPerHost: 10000,
-			//MaxConnsPerHost:     300,
-			DisableCompression: false,
-			DisableKeepAlives:  c.DisableKeepAlive,
+			DisableCompression:  false,
+			DisableKeepAlives:   c.DisableKeepAlive,
 		},
 	}
 
 	if c.FileMode {
-		urlSuffixes, err = readFile(c.InputFile)
-		if err != nil {
-			return ResultMetrics{}, err
+		if c.Requests > len(c.URLPaths) {
+			c.URLPaths = generateSuffixes(c.URLPaths, c.Requests)
 		}
-		if c.Requests > len(urlSuffixes) {
-			urlSuffixes = generateSuffixes(urlSuffixes, c.Requests)
-		}
-		c.Requests = len(urlSuffixes)
+		c.Requests = len(c.URLPaths)
 	}
 
 	c.Bar = progressbar.New(c.Requests)
@@ -191,7 +183,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	}
 
 	if c.FileMode {
-		for _, line := range urlSuffixes {
+		for _, line := range c.URLPaths {
 			workerChan <- line
 		}
 	} else {

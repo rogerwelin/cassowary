@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -65,14 +64,6 @@ func runLoadTest(c *client.Cassowary) error {
 		return outPutJSON(c.ExportMetricsFile, metrics)
 	}
 	return nil
-}
-
-func readFile(file string) ([]byte, error) {
-	fileContent, err := ioutil.ReadFile(file)
-	if err != nil {
-		return []byte{}, err
-	}
-	return fileContent, nil
 }
 
 func validateCLI(c *cli.Context) error {
@@ -167,9 +158,13 @@ func validateCLIFile(c *cli.Context) error {
 		}
 	}
 
+	urlSuffixes, err := readLocalRemoteFile(c.String("file"))
+	if err != nil {
+		return nil
+	}
+
 	cass := &client.Cassowary{
 		FileMode:          true,
-		InputFile:         c.String("file"),
 		BaseURL:           c.String("url"),
 		ConcurrencyLevel:  c.Int("concurrency"),
 		RequestHeader:     header,
@@ -180,6 +175,7 @@ func validateCLIFile(c *cli.Context) error {
 		DisableKeepAlive:  c.Bool("diable-keep-alive"),
 		Timeout:           c.Int("timeout"),
 		Requests:          c.Int("requests"),
+		URLPaths:          urlSuffixes,
 		HTTPMethod:        "GET",
 	}
 

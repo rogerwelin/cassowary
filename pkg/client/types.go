@@ -10,7 +10,6 @@ import (
 type Cassowary struct {
 	FileMode              bool
 	IsTLS                 bool
-	InputFile             string
 	BaseURL               string
 	ConcurrencyLevel      int
 	Requests              int
@@ -19,6 +18,7 @@ type Cassowary struct {
 	PromExport            bool
 	PromURL               string
 	RequestHeader         []string
+	URLPaths              []string
 	DisableTerminalOutput bool
 	DisableKeepAlive      bool
 	Client                *http.Client
