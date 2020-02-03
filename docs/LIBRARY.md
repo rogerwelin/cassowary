@@ -64,7 +64,7 @@ func main() {
 		ConcurrencyLevel:      2,
 		Requests:              30,
 		FileMode:	       true,
-		URLPaths:	       []string{"/accounts", "/orders", "/customers"}
+		URLPaths:	       []string{"/accounts", "/orders", "/customers"},
 		DisableTerminalOutput: true,
 	}
 	metrics, err := cass.Coordinate()
