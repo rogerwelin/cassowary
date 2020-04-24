@@ -18,6 +18,7 @@ var (
 	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
 	errNotValidURL      = errors.New("Error: Not a valid URL. Must have the following format: http{s}://{host}")
 	errNotValidHeader   = errors.New("Error: Not a valid header value. Did you forget : ?")
+	errDurationValue    = errors.New("Error: Duration cannot be set to 0 or negative")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -72,6 +73,7 @@ func validateCLI(c *cli.Context) error {
 	var header []string
 	var httpMethod string
 	var data []byte
+	duration := 0
 
 	if c.Int("concurrency") == 0 {
 		return errConcurrencyLevel
@@ -79,6 +81,17 @@ func validateCLI(c *cli.Context) error {
 
 	if c.Int("requests") == 0 {
 		return errRequestNo
+	}
+
+	if c.String("duration") != "" {
+		var err error
+		duration, err = strconv.Atoi(c.String("duration"))
+		if err != nil {
+			return err
+		}
+		if duration <= 0 {
+			return errDurationValue
+		}
 	}
 
 	if client.IsValidURL(c.String("url")) == false {
@@ -121,6 +134,7 @@ func validateCLI(c *cli.Context) error {
 		ConcurrencyLevel:  c.Int("concurrency"),
 		Requests:          c.Int("requests"),
 		RequestHeader:     header,
+		Duration:          duration,
 		PromExport:        prometheusEnabled,
 		PromURL:           c.String("prompushgwurl"),
 		ExportMetrics:     c.Bool("json-metrics"),
@@ -260,6 +274,10 @@ func runCLI(args []string) {
 					Name:     "n, requests",
 					Usage:    "number of requests to perform",
 					Required: true,
+				},
+				cli.StringFlag{
+					Name:  "d, duration",
+					Usage: "set the duration in seconds of the load test (example: do 100 requests in a duration of 30s)",
 				},
 				cli.IntFlag{
 					Name:  "t, timeout",

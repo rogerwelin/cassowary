@@ -13,6 +13,7 @@ type Cassowary struct {
 	BaseURL               string
 	ConcurrencyLevel      int
 	Requests              int
+	Duration              int
 	ExportMetrics         bool
 	ExportMetricsFile     string
 	PromExport            bool

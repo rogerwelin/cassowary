@@ -182,11 +182,33 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		}()
 	}
 
-	if c.FileMode {
+	if c.Duration > 0 {
+		durationMS := c.Duration * 1000
+		nextTick := durationMS / c.Requests
+		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
+		done := make(chan bool)
+
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				case _ = <-ticker.C:
+					workerChan <- "a"
+				}
+			}
+		}()
+
+		time.Sleep(time.Duration(durationMS) * time.Millisecond)
+		ticker.Stop()
+		done <- true
+	}
+
+	if c.Duration == 0 && c.FileMode {
 		for _, line := range c.URLPaths {
 			workerChan <- line
 		}
-	} else {
+	} else if c.Duration == 0 && !c.FileMode {
 		for i := 0; i < c.Requests; i++ {
 			workerChan <- "a"
 		}

@@ -158,6 +158,17 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+Example specifying a *duration* for your load test, in the command below we specify that we want send 100 requests over a duration of 30 seconds:
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -n 100 -d 30
+
+Starting Load Test with 100 requests using 1 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 Example adding an HTTP header when running **cassowary**
 
 ```bash
