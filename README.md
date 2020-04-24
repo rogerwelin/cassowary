@@ -23,6 +23,16 @@ Toc
 - [Features](#features)
 - [Installation](#installation)
 - [Running Cassowary](#running-cassowary)
+  1. [Regular Load Test](#regular-load-test)
+  2. [File Slurp Mode](#file-slurp-mode)
+  3. [Exporting Metrics to File](#exporting-metrics-to-file)
+  4. [Exporting Metrics to Prometheus](#exporting-metrics-to-prometheus)
+  5. [Load Test with POST Data](#load-test-with-post-data)
+  6. [Specifying a Duration](#specifying-a-duration-for-the-load-test)
+  7. [Adding HTTP Headers](#adding-http-headers)
+  8. [Disabling HTTP keep-alive](#disabling-http-keep-alive)
+- [Importing cassowary as a module](#importing-cassowary-as-a-module/library)
+- [Versioning](#versioning)
 - [Contributing](#contributing)
 
 
@@ -62,6 +72,7 @@ If you want to roll out your own RPM you can use the spec file [cassowary.spec](
 Running Cassowary  
 --------
 
+### Regular Load Test  
 Example running **cassowary** against www.example.com with 100 requests spread out over 10 concurrent users:
 
 ```bash
@@ -83,6 +94,7 @@ Summary:
  Req/s...........................: 79.57
 ```
 
+### File Slurp Mode  
 Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified). By default cassowary will, without the -n flag specified, make one request per path specified in the file. However with the -n flag you can also specify how many request you want cassowary to generate against those URL paths. Example:
 
 ```bash
@@ -91,7 +103,6 @@ $ ./cassowary run-file -u http://localhost:8000 -c 1 -f urlpath.txt
 Starting Load Test with 5 requests using 1 concurrent users
 
 [ omitted ]
-
 
 
 $ ./cassowary run-file -u http://localhost:8000 -c 10 -n 100 -f urlpath.txt
@@ -112,6 +123,7 @@ Summary:
  Req/s...........................: 6547.48
 ```
 
+### Exporting Metrics to File  
 Example exporting **cassowary** json metrics to a file:
 
 ```bash
@@ -136,6 +148,7 @@ Summary:
 > If `json-metrics-file` flag is missing then the default filename is `out.json`.
 
 
+### Exporting Metrics to Prometheus
 Example exporting **cassowary** metrics to Prometheus by supplying an Prometheus PushGatway URL:
 
 ```bash
@@ -147,6 +160,7 @@ Starting Load Test with 100000 requests using 125 concurrent users
 
 ```
 
+### Load Test with POST Data  
 Example hitting a POST endpoint where POST json data is defined in a file:
 
 ```bash
@@ -158,6 +172,7 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+### Specifying a Duration for the Load Test  
 Example specifying a *duration* for your load test, in the command below we specify that we want send 100 requests over a duration of 30 seconds:
 
 ```bash
@@ -169,6 +184,7 @@ Starting Load Test with 100 requests using 1 concurrent users
 
 ```
 
+### Adding HTTP Headers  
 Example adding an HTTP header when running **cassowary**
 
 ```bash
@@ -180,6 +196,7 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+### Disabling HTTP keep-alive  
 Example disabling http keep-alive (by default keep-alive are enabled):
 
 ```bash
@@ -191,8 +208,8 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
-
-**Importing cassowary as a module/library**  
+Importing cassowary as a module/library
+--------
 
 Cassowary can be imported and used as a module in your Go app. Start by fetching the dependency by using go mod:
 
@@ -243,7 +260,7 @@ More library examples [can be found here](docs/LIBRARY.md)
 Versioning
 --------
 
-Cassowary follows semantic versioning. The public library (pkg/client) may break backwards compability until it hits a stable v1.0.0 release.
+Cassowary follows semantic versioning. The public library (pkg/client) may break backwards compatibility until it hits a stable v1.0.0 release.
 
 Contributing
 --------
