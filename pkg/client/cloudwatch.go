@@ -2,20 +2,23 @@ package client
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 )
 
 // PutCloudwatchMetrics exports metrics to a Cloudwatch
-func (c *Cassowary) PutCloudwatchMetrics(metrics ResultMetrics) error {
-	session, err := session.NewSession()
-	if err != nil {
-		return err
-	}
+func (c *Cassowary) PutCloudwatchMetrics(svc cloudwatchiface.CloudWatchAPI, metrics ResultMetrics) error {
 
-	svc := cloudwatch.New(session)
+	/*
+		session, err := session.NewSession()
+		if err != nil {
+			return err
+		}
 
-	_, err = svc.PutMetricData(&cloudwatch.PutMetricDataInput{
+		svc := cloudwatch.New(session)
+	*/
+
+	_, err := svc.PutMetricData(&cloudwatch.PutMetricDataInput{
 		Namespace: aws.String("Cassowary/Metrics"),
 		MetricData: []*cloudwatch.MetricDatum{
 			&cloudwatch.MetricDatum{
@@ -25,7 +28,7 @@ func (c *Cassowary) PutCloudwatchMetrics(metrics ResultMetrics) error {
 				Dimensions: []*cloudwatch.Dimension{
 					&cloudwatch.Dimension{
 						Name:  aws.String("Site"),
-						Value: aws.String("www.example.com"),
+						Value: aws.String(c.BaseURL),
 					},
 				},
 			},
