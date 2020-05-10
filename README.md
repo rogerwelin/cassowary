@@ -27,6 +27,7 @@ Toc
   * [File Slurp Mode](#file-slurp-mode)
   * [Exporting Metrics to File](#exporting-metrics-to-file)
   * [Exporting Metrics to Prometheus](#exporting-metrics-to-prometheus)
+  * [Exporting Metrics to Cloudwatch](#exporting-metrics-to-cloudwatch)
   * [Load Test with POST Data](#load-test-with-post-data)
   * [Specifying a Duration](#specifying-a-duration-for-the-load-test)
   * [Adding HTTP Headers](#adding-http-headers)
@@ -41,7 +42,7 @@ Features
 
 - **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)
 - **CI Friendly**: Well-suited to be part of a CI pipeline step
-- **Flexible metrics**: Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
+- **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
 - **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client
 - **Supports GET, POST & PUT** - POST and PUT data can be defined in a file
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
@@ -159,6 +160,19 @@ Starting Load Test with 100000 requests using 125 concurrent users
 [ omitted for brevity ]
 
 ```
+
+### Exporting Metrics to Cloudwatch
+**Cassowary** can export metrics to AWS Cloudwatch just by adding the *--cloudwatch* flag without a value:
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 125 -n 100000 --cloudwatch
+
+Starting Load Test with 100000 requests using 125 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 
 ### Load Test with POST Data  
 Example hitting a POST endpoint where POST json data is defined in a file:
