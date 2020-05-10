@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/fatih/color"
 	"github.com/rogerwelin/cassowary/pkg/client"
 	"github.com/urfave/cli"
@@ -64,6 +66,27 @@ func runLoadTest(c *client.Cassowary) error {
 	if c.ExportMetrics {
 		return outPutJSON(c.ExportMetricsFile, metrics)
 	}
+
+	if c.PromExport {
+		err := c.PushPrometheusMetrics(metrics)
+		if err != nil {
+			return err
+		}
+	}
+
+	if c.Cloudwatch {
+		session, err := session.NewSession()
+		if err != nil {
+			return err
+		}
+
+		svc := cloudwatch.New(session)
+		_, err = c.PutCloudwatchMetrics(svc, metrics)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -137,6 +160,7 @@ func validateCLI(c *cli.Context) error {
 		Duration:          duration,
 		PromExport:        prometheusEnabled,
 		PromURL:           c.String("prompushgwurl"),
+		Cloudwatch:        c.Bool("cloudwatch"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
@@ -184,6 +208,7 @@ func validateCLIFile(c *cli.Context) error {
 		RequestHeader:     header,
 		PromExport:        prometheusEnabled,
 		PromURL:           c.String("prompushgwurl"),
+		Cloudwatch:        c.Bool("cloudwatch"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("diable-keep-alive"),
@@ -237,6 +262,10 @@ func runCLI(args []string) {
 					Name:  "p, prompushgwurl",
 					Usage: "specify prometheus push gateway url to send metrics (optional)",
 				},
+				cli.BoolFlag{
+					Name:  "C, cloudwatch",
+					Usage: "enable to send metrics to AWS Cloudwatch",
+				},
 				cli.StringFlag{
 					Name:  "H, header",
 					Usage: "add arbitrary header, eg. 'Host: www.example.com'",
@@ -287,6 +316,10 @@ func runCLI(args []string) {
 				cli.StringFlag{
 					Name:  "p, prompushgwurl",
 					Usage: "specify prometheus push gateway url to send metrics (optional)",
+				},
+				cli.BoolFlag{
+					Name:  "C, cloudwatch",
+					Usage: "enable to send metrics to AWS Cloudwatch",
 				},
 				cli.StringFlag{
 					Name:  "H, header",

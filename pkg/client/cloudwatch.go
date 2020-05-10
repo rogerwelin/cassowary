@@ -6,25 +6,136 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 )
 
-// PutCloudwatchMetrics exports metrics to a Cloudwatch
-func (c *Cassowary) PutCloudwatchMetrics(svc cloudwatchiface.CloudWatchAPI, metrics ResultMetrics) error {
-
-	/*
-		session, err := session.NewSession()
-		if err != nil {
-			return err
-		}
-
-		svc := cloudwatch.New(session)
-	*/
-
-	_, err := svc.PutMetricData(&cloudwatch.PutMetricDataInput{
+// PutCloudwatchMetrics exports metrics to AWS Cloudwatch
+func (c *Cassowary) PutCloudwatchMetrics(svc cloudwatchiface.CloudWatchAPI, metrics ResultMetrics) (*cloudwatch.PutMetricDataOutput, error) {
+	resp, err := svc.PutMetricData(&cloudwatch.PutMetricDataInput{
 		Namespace: aws.String("Cassowary/Metrics"),
 		MetricData: []*cloudwatch.MetricDatum{
 			&cloudwatch.MetricDatum{
-				MetricName: aws.String("apa"),
-				Unit:       aws.String("unit"),
-				Value:      aws.Float64(444.44),
+				MetricName: aws.String("tcp_connect_mean"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.TCPStats.TCPMean),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("tcp_connect_median"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.TCPStats.TCPMedian),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("tcp_connect_95p"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.TCPStats.TCP95p),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("server_processing_mean"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ProcessingStats.ServerProcessingMean),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("server_processing_median"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ProcessingStats.ServerProcessingMedian),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("server_processing_95p"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ProcessingStats.ServerProcessing95p),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("content_transfer_mean"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ContentStats.ContentTransferMean),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("content_transfer_median"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ContentStats.ContentTransferMedian),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("content_transfer_95p"),
+				Unit:       aws.String("Milliseconds"),
+				Value:      aws.Float64(metrics.ContentStats.ContentTransfer95p),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("total_requests"),
+				Unit:       aws.String("Count"),
+				Value:      aws.Float64(float64(metrics.TotalRequests)),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("failed_requests"),
+				Unit:       aws.String("Count"),
+				Value:      aws.Float64(float64(metrics.FailedRequests)),
+				Dimensions: []*cloudwatch.Dimension{
+					&cloudwatch.Dimension{
+						Name:  aws.String("Site"),
+						Value: aws.String(c.BaseURL),
+					},
+				},
+			},
+			&cloudwatch.MetricDatum{
+				MetricName: aws.String("requests_per_second"),
+				Unit:       aws.String("Count/Second"),
+				Value:      aws.Float64(metrics.RequestsPerSecond),
 				Dimensions: []*cloudwatch.Dimension{
 					&cloudwatch.Dimension{
 						Name:  aws.String("Site"),
@@ -36,8 +147,8 @@ func (c *Cassowary) PutCloudwatchMetrics(svc cloudwatchiface.CloudWatchAPI, metr
 	})
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return nil
+	return resp, nil
 }
