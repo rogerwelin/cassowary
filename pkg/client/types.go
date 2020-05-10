@@ -17,6 +17,7 @@ type Cassowary struct {
 	ExportMetrics         bool
 	ExportMetricsFile     string
 	PromExport            bool
+	Cloudwatch            bool
 	PromURL               string
 	RequestHeader         []string
 	URLPaths              []string
