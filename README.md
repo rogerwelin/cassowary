@@ -162,10 +162,10 @@ Starting Load Test with 100000 requests using 125 concurrent users
 ```
 
 ### Exporting Metrics to Cloudwatch
-**Cassowary** can export metrics to AWS Cloudwatch just by adding the *--cloudwatch* flag without a value:
+**Cassowary** can export metrics to AWS Cloudwatch just by adding the *--cloudwatch* flag without a value. Take note that you will need to tell Cassoway which AWS Region you want to use. The easiest way is using an environment variable as shown below:
 
 ```bash
-$ ./cassowary run -u http://localhost:8000 -c 125 -n 100000 --cloudwatch
+$ export AWS_REGION=eu-north-1 && ./cassowary run -u http://localhost:8000 -c 125 -n 100000 --cloudwatch
 
 Starting Load Test with 100000 requests using 125 concurrent users
 
