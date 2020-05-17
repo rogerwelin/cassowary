@@ -35,7 +35,7 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		if c.FileMode {
 			request, err = http.NewRequest("GET", c.BaseURL+URLitem, nil)
 			if err != nil {
-				panic(err)
+				log.Fatalf("%v", err)
 			}
 		} else {
 			switch c.HTTPMethod {
@@ -43,18 +43,18 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 				request, err = http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(c.Data))
 				request.Header.Set("Content-Type", "application/json")
 				if err != nil {
-					panic(err)
+					log.Fatalf("%v", err)
 				}
 			case "PUT":
 				request, err = http.NewRequest("PUT", c.BaseURL, bytes.NewBuffer(c.Data))
 				request.Header.Set("Content-Type", "application/json")
 				if err != nil {
-					panic(err)
+					log.Fatalf("%v", err)
 				}
 			default:
 				request, err = http.NewRequest("GET", c.BaseURL, nil)
 				if err != nil {
-					panic(err)
+					log.Fatalf("%v", err)
 				}
 			}
 		}
@@ -90,7 +90,7 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		request = request.WithContext(httptrace.WithClientTrace(context.Background(), trace))
 		resp, err := c.Client.Do(request)
 		if err != nil {
-			panic(err)
+			log.Fatalf("%v", err)
 		}
 		if resp != nil {
 			_, err = io.Copy(ioutil.Discard, resp.Body)
