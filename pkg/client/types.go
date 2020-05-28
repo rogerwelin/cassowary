@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	"github.com/schollz/progressbar"
@@ -18,6 +19,7 @@ type Cassowary struct {
 	ExportMetricsFile     string
 	PromExport            bool
 	Cloudwatch            bool
+	TLSConfig             *tls.Config
 	PromURL               string
 	RequestHeader         []string
 	URLPaths              []string

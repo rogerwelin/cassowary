@@ -148,6 +148,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	c.Client = &http.Client{
 		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
+			TLSClientConfig:     c.TLSConfig,
 			MaxIdleConnsPerHost: 10000,
 			DisableCompression:  false,
 			DisableKeepAlives:   c.DisableKeepAlive,
