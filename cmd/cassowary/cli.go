@@ -384,15 +384,15 @@ func runCLI(args []string) {
 				},
 				cli.StringFlag{
 					Name:  "ca",
-					Usage: "certificate authority",
+					Usage: "ca certificate to verify peer against",
 				},
 				cli.StringFlag{
 					Name:  "cert",
-					Usage: "authentication certificate",
+					Usage: "client authentication certificate",
 				},
 				cli.StringFlag{
 					Name:  "key",
-					Usage: "authentication key",
+					Usage: "client authentication key",
 				},
 			},
 			Action: validateCLI,
