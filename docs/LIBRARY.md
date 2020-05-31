@@ -84,3 +84,65 @@ func main() {
 	fmt.Println(string(jsonMetrics))
 }
 ```
+
+**Example 3: Custom TLS config**
+
+```go
+package main
+
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+
+	cassowary "github.com/rogerwelin/cassowary/pkg/client"
+)
+
+func main() {
+	pemCerts, err := ioutil.ReadFile("testdata/ca.pem")
+	if err != nil {
+		panic("Invalid ca.pem path")
+	}
+
+	ca := x509.NewCertPool()
+	if !ca.AppendCertsFromPEM(pemCerts) {
+		panic("Failed to read CA from PEM")
+	}
+
+	cert, err := tls.LoadX509KeyPair("testdata/client.pem", "testdata/client-key.pem")
+	if err != nil {
+		panic("Invalid client.pem/client-key.pem path")
+	}
+
+	clientTLSConfig := &tls.Config{
+		RootCAs:      ca,
+		Certificates: []tls.Certificate{cert},
+	}
+
+	cass := &cassowary.Cassowary{
+		BaseURL:               "http://www.example.com",
+		ConcurrencyLevel:      1,
+		Requests:              10,
+		TLSConfig:             clientTLSConfig,
+		DisableTerminalOutput: true,
+	}
+	metrics, err := cass.Coordinate()
+	if err != nil {
+		panic(err)
+	}
+
+	// print results
+	fmt.Printf("%+v\n", metrics)
+
+	// or print as json
+	jsonMetrics, err := json.Marshal(metrics)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(jsonMetrics))
+}
+
+```

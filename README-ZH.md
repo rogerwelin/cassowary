@@ -138,6 +138,26 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+示例:指定自定义 ca 证书
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --ca /path/to/ca.pem
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
+示例:指定客户端证书信息
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 
 **以模块或者library导入Cassowary**  
 
