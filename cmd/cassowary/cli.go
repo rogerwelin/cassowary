@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -151,6 +154,27 @@ func validateCLI(c *cli.Context) error {
 		httpMethod = "GET"
 	}
 
+	tlsConfig := new(tls.Config)
+	if c.String("ca") != "" {
+		pemCerts, err := ioutil.ReadFile(c.String("ca"))
+		if err != nil {
+			return err
+		}
+		ca := x509.NewCertPool()
+		if !ca.AppendCertsFromPEM(pemCerts) {
+			return fmt.Errorf("failed to read CA from PEM")
+		}
+		tlsConfig.RootCAs = ca
+	}
+
+	if c.String("cert") != "" && c.String("key") != "" {
+		cert, err := tls.LoadX509KeyPair(c.String("cert"), c.String("key"))
+		if err != nil {
+			return err
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
 	cass := &client.Cassowary{
 		FileMode:          false,
 		BaseURL:           c.String("url"),
@@ -159,6 +183,7 @@ func validateCLI(c *cli.Context) error {
 		RequestHeader:     header,
 		Duration:          duration,
 		PromExport:        prometheusEnabled,
+		TLSConfig:         tlsConfig,
 		PromURL:           c.String("prompushgwurl"),
 		Cloudwatch:        c.Bool("cloudwatch"),
 		ExportMetrics:     c.Bool("json-metrics"),
@@ -282,6 +307,18 @@ func runCLI(args []string) {
 					Name:  "disable-keep-alive",
 					Usage: "use this flag to disable http keep-alive",
 				},
+				cli.StringFlag{
+					Name:  "ca",
+					Usage: "ca certificate to verify peer against",
+				},
+				cli.StringFlag{
+					Name:  "cert",
+					Usage: "client authentication certificate",
+				},
+				cli.StringFlag{
+					Name:  "key",
+					Usage: "client authentication key",
+				},
 			},
 			Action: validateCLIFile,
 		},
@@ -344,6 +381,18 @@ func runCLI(args []string) {
 				cli.BoolFlag{
 					Name:  "disable-keep-alive",
 					Usage: "use this flag to disable http keep-alive",
+				},
+				cli.StringFlag{
+					Name:  "ca",
+					Usage: "ca certificate to verify peer against",
+				},
+				cli.StringFlag{
+					Name:  "cert",
+					Usage: "client authentication certificate",
+				},
+				cli.StringFlag{
+					Name:  "key",
+					Usage: "client authentication key",
 				},
 			},
 			Action: validateCLI,

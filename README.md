@@ -222,6 +222,30 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
+### Specifying ca certificate
+Example specifying ca certificate
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --ca /path/to/ca.pem
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
+### Specifying client authentication certificate
+Example specifying client authentication certificate
+
+```bash
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem
+
+Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
 Importing cassowary as a module/library
 --------
 
