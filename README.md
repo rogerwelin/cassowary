@@ -55,7 +55,14 @@ Features
 Installation  
 --------
 
-Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location
+Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location. Alternative you can:
+
+### Homebrew on MAX OSX  
+You can install **cassowary** using the Homebrew package manager on Mac:
+
+```bash
+$ brew update && brew install cassowary
+```
 
 ### Nix/NixOS
 
@@ -234,11 +241,11 @@ Starting Load Test with 1000 requests using 10 concurrent users
 
 ```
 
-### Specifying client authentication certificate
-Example specifying client authentication certificate
+### x509 Authentication
+Example specifying client authentication for mTLS
 
 ```bash
-$ ./cassowary run -u http://localhost:8000 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem
+$ ./cassowary run -u https://localhost:8443 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem --ca /path/to/ca.pem
 
 Starting Load Test with 1000 requests using 10 concurrent users
 
