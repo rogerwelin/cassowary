@@ -32,6 +32,7 @@ Toc
   * [Specifying a Duration](#specifying-a-duration-for-the-load-test)
   * [Adding HTTP Headers](#adding-http-headers)
   * [Disabling HTTP keep-alive](#disabling-http-keep-alive)
+  * [x509 Authentication](#x509-authentication)
 - [Importing cassowary as a module](#importing-cassowary-as-a-modulelibrary)
 - [Versioning](#versioning)
 - [Contributing](#contributing)
@@ -57,7 +58,7 @@ Installation
 
 Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location. Alternative you can:
 
-### Homebrew on MAX OSX  
+### Homebrew on MAC OSX  
 You can install **cassowary** using the Homebrew package manager on Mac:
 
 ```bash
