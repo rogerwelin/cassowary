@@ -71,7 +71,7 @@ Summary:
 示例:访问外部文件指定的URL路径(外部文件也可以是http路径的)
 
 ```bash
-$ ./cassowary run-file -u http://localhost:8000 -c 10 -f urlpath.txt
+$ ./cassowary run -u http://localhost:8000 -c 10 -f urlpath.txt
 
 Starting Load Test with 3925 requests using 10 concurrent users
 

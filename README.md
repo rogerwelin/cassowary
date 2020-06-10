@@ -58,7 +58,7 @@ Installation
 
 Grab a pre-built binary from the [GitHub Releases page](https://github.com/rogerwelin/cassowary/releases). You can optionally put the **cassowary** binary in your `PATH` so you can run cassowary from any location. Alternative you can:
 
-### Homebrew on MAC OSX  
+### Homebrew on Mac OSX  
 You can install **cassowary** using the Homebrew package manager on Mac:
 
 ```bash
@@ -107,14 +107,14 @@ Summary:
 Example running **cassowary** in file slurp mode where all URL paths are specified from an external file (which can also be fetched from http if specified). By default cassowary will, without the -n flag specified, make one request per path specified in the file. However with the -n flag you can also specify how many request you want cassowary to generate against those URL paths. Example:
 
 ```bash
-$ ./cassowary run-file -u http://localhost:8000 -c 1 -f urlpath.txt
+$ ./cassowary run -u http://localhost:8000 -c 1 -f urlpath.txt
 
 Starting Load Test with 5 requests using 1 concurrent users
 
 [ omitted ]
 
 
-$ ./cassowary run-file -u http://localhost:8000 -c 10 -n 100 -f urlpath.txt
+$ ./cassowary run -u http://localhost:8000 -c 10 -n 100 -f urlpath.txt
 
 Starting Load Test with 100 requests using 10 concurrent users
 
