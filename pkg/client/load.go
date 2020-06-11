@@ -188,6 +188,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		nextTick := durationMS / c.Requests
 		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
 		done := make(chan bool)
+		iter := 0
 
 		go func() {
 			for {
@@ -195,7 +196,12 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 				case <-done:
 					return
 				case _ = <-ticker.C:
-					workerChan <- "a"
+					if c.FileMode {
+						workerChan <- c.URLPaths[iter]
+						iter++
+					} else {
+						workerChan <- "a"
+					}
 				}
 			}
 		}()

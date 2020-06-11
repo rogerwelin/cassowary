@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/fatih/color"
 	"github.com/rogerwelin/cassowary/pkg/client"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -94,12 +94,13 @@ func runLoadTest(c *client.Cassowary) error {
 }
 
 func validateCLI(c *cli.Context) error {
-
 	prometheusEnabled := false
 	var header []string
 	var httpMethod string
 	var data []byte
 	duration := 0
+	var urlSuffixes []string
+	fileMode := false
 
 	if c.Int("concurrency") == 0 {
 		return errConcurrencyLevel
@@ -134,6 +135,15 @@ func validateCLI(c *cli.Context) error {
 		if length != 2 {
 			return errNotValidHeader
 		}
+	}
+
+	if c.String("file") != "" {
+		var err error
+		urlSuffixes, err = readLocalRemoteFile(c.String("file"))
+		if err != nil {
+			return nil
+		}
+		fileMode = true
 	}
 
 	if c.String("postfile") != "" {
@@ -176,7 +186,7 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	cass := &client.Cassowary{
-		FileMode:          false,
+		FileMode:          fileMode,
 		BaseURL:           c.String("url"),
 		ConcurrencyLevel:  c.Int("concurrency"),
 		Requests:          c.Int("requests"),
@@ -191,56 +201,8 @@ func validateCLI(c *cli.Context) error {
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 		Timeout:           c.Int("timeout"),
 		HTTPMethod:        httpMethod,
-		Data:              data,
-	}
-
-	return runLoadTest(cass)
-}
-
-func validateCLIFile(c *cli.Context) error {
-	prometheusEnabled := false
-	var header []string
-
-	if c.Int("concurrency") == 0 {
-		return errConcurrencyLevel
-	}
-
-	if client.IsValidURL(c.String("url")) == false {
-		return errNotValidURL
-	}
-
-	if c.String("prompushgwurl") != "" {
-		prometheusEnabled = true
-	}
-
-	if c.String("header") != "" {
-		length := 0
-		length, header = client.SplitHeader(c.String("header"))
-		if length != 2 {
-			return errNotValidHeader
-		}
-	}
-
-	urlSuffixes, err := readLocalRemoteFile(c.String("file"))
-	if err != nil {
-		return nil
-	}
-
-	cass := &client.Cassowary{
-		FileMode:          true,
-		BaseURL:           c.String("url"),
-		ConcurrencyLevel:  c.Int("concurrency"),
-		RequestHeader:     header,
-		PromExport:        prometheusEnabled,
-		PromURL:           c.String("prompushgwurl"),
-		Cloudwatch:        c.Bool("cloudwatch"),
-		ExportMetrics:     c.Bool("json-metrics"),
-		ExportMetricsFile: c.String("json-metrics-file"),
-		DisableKeepAlive:  c.Bool("diable-keep-alive"),
-		Timeout:           c.Int("timeout"),
-		Requests:          c.Int("requests"),
 		URLPaths:          urlSuffixes,
-		HTTPMethod:        "GET",
+		Data:              data,
 	}
 
 	return runLoadTest(cass)
@@ -254,143 +216,90 @@ func runCLI(args []string) {
 	app.EnableBashCompletion = true
 	app.Usage = ""
 	app.Version = version
-	app.Commands = []cli.Command{
-		{
-			Name:  "run-file",
-			Usage: "start load test in spread mode",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "u, url",
-					Usage:    "the base url (absoluteURI) to be used",
-					Required: true,
-				},
-				cli.IntFlag{
-					Name:     "c, concurrency",
-					Usage:    "number of concurrent users",
-					Required: true,
-				},
-				cli.IntFlag{
-					Name:  "n, requests",
-					Usage: "number of requests to perform",
-				},
-				cli.IntFlag{
-					Name:  "t, timeout",
-					Usage: "http client timeout",
-					Value: 5,
-				},
-				cli.StringFlag{
-					Name:     "f, file",
-					Usage:    "specify `FILE` path, local or www, containing the url suffixes",
-					Required: true,
-				},
-				cli.StringFlag{
-					Name:  "p, prompushgwurl",
-					Usage: "specify prometheus push gateway url to send metrics (optional)",
-				},
-				cli.BoolFlag{
-					Name:  "C, cloudwatch",
-					Usage: "enable to send metrics to AWS Cloudwatch",
-				},
-				cli.StringFlag{
-					Name:  "H, header",
-					Usage: "add arbitrary header, eg. 'Host: www.example.com'",
-				},
-				cli.BoolFlag{
-					Name:  "F, json-metrics",
-					Usage: "outputs metrics to a json file by setting flag to true",
-				},
-				cli.StringFlag{
-					Name:  "json-metrics-file",
-					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
-				},
-				cli.BoolFlag{
-					Name:  "disable-keep-alive",
-					Usage: "use this flag to disable http keep-alive",
-				},
-				cli.StringFlag{
-					Name:  "ca",
-					Usage: "ca certificate to verify peer against",
-				},
-				cli.StringFlag{
-					Name:  "cert",
-					Usage: "client authentication certificate",
-				},
-				cli.StringFlag{
-					Name:  "key",
-					Usage: "client authentication key",
-				},
-			},
-			Action: validateCLIFile,
-		},
+	app.Commands = []*cli.Command{
 		{
 			Name:  "run",
 			Usage: "start load-test",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "u, url",
+				&cli.StringFlag{
+					Name:     "u",
+					Aliases:  []string{"url"},
 					Usage:    "the url (absoluteURI) to be used",
 					Required: true,
 				},
-				cli.IntFlag{
-					Name:     "c, concurrency",
-					Usage:    "number of concurrent users",
-					Required: true,
+				&cli.IntFlag{
+					Name:    "c",
+					Aliases: []string{"concurrency"},
+					Usage:   "number of concurrent users",
+					Value:   1,
 				},
-				cli.IntFlag{
-					Name:     "n, requests",
-					Usage:    "number of requests to perform",
-					Required: true,
+				&cli.IntFlag{
+					Name:    "n",
+					Aliases: []string{"requests"},
+					Usage:   "number of requests to perform",
+					Value:   1,
 				},
-				cli.StringFlag{
-					Name:  "d, duration",
-					Usage: "set the duration in seconds of the load test (example: do 100 requests in a duration of 30s)",
+				&cli.StringFlag{
+					Name:    "f",
+					Aliases: []string{"file"},
+					Usage:   "file-slurp mode: specify `FILE` path, local or www, containing the url suffixes",
 				},
-				cli.IntFlag{
-					Name:  "t, timeout",
-					Usage: "http client timeout",
-					Value: 5,
+				&cli.StringFlag{
+					Name:    "d",
+					Aliases: []string{"duration"},
+					Usage:   "set the duration in seconds of the load test (example: do 100 requests in a duration of 30s)",
 				},
-				cli.StringFlag{
-					Name:  "p, prompushgwurl",
-					Usage: "specify prometheus push gateway url to send metrics (optional)",
+				&cli.IntFlag{
+					Name:    "t",
+					Aliases: []string{"timeout"},
+					Usage:   "http client timeout",
+					Value:   5,
 				},
-				cli.BoolFlag{
-					Name:  "C, cloudwatch",
-					Usage: "enable to send metrics to AWS Cloudwatch",
+				&cli.StringFlag{
+					Name:    "p",
+					Aliases: []string{"prompushgwurl"},
+					Usage:   "specify prometheus push gateway url to send metrics (optional)",
 				},
-				cli.StringFlag{
-					Name:  "H, header",
-					Usage: "add arbitrary header, eg. 'Host: www.example.com'",
+				&cli.BoolFlag{
+					Name:    "C",
+					Aliases: []string{"cloudwatch"},
+					Usage:   "enable to send metrics to AWS Cloudwatch",
 				},
-				cli.BoolFlag{
-					Name:  "F, json-metrics",
-					Usage: "outputs metrics to a json file by setting flag to true",
+				&cli.StringFlag{
+					Name:    "H",
+					Aliases: []string{"header"},
+					Usage:   "add arbitrary header, eg. 'Host: www.example.com'",
 				},
-				cli.StringFlag{
+				&cli.BoolFlag{
+					Name:    "F",
+					Aliases: []string{"json-metrics"},
+					Usage:   "outputs metrics to a json file by setting flag to true",
+				},
+				&cli.StringFlag{
 					Name:  "postfile",
 					Usage: "file containing data to POST (content type will default to application/json)",
 				},
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "putfile",
 					Usage: "file containig data to PUT (content type will default to application/json)",
 				},
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "json-metrics-file",
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
 				},
-				cli.BoolFlag{
+				&cli.BoolFlag{
 					Name:  "disable-keep-alive",
 					Usage: "use this flag to disable http keep-alive",
 				},
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "ca",
 					Usage: "ca certificate to verify peer against",
 				},
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "cert",
 					Usage: "client authentication certificate",
 				},
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "key",
 					Usage: "client authentication key",
 				},
