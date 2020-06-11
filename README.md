@@ -109,6 +109,9 @@ Example running **cassowary** in file slurp mode where all URL paths are specifi
 ```bash
 $ ./cassowary run -u http://localhost:8000 -c 1 -f urlpath.txt
 
+# NOTE: from v0.10.0 and below file slurp mode had it's own command
+# $ ./cassowary run-file -u http://localhost:8000 -c 1 -f urlpath.txt
+
 Starting Load Test with 5 requests using 1 concurrent users
 
 [ omitted ]
