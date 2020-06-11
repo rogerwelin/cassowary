@@ -281,7 +281,7 @@ func runCLI(args []string) {
 				},
 				&cli.StringFlag{
 					Name:  "putfile",
-					Usage: "file containig data to PUT (content type will default to application/json)",
+					Usage: "file containing data to PUT (content type will default to application/json)",
 				},
 				&cli.StringFlag{
 					Name:  "json-metrics-file",
