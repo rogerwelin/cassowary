@@ -51,6 +51,12 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 				if err != nil {
 					log.Fatalf("%v", err)
 				}
+			case "PATCH":
+				request, err = http.NewRequest("PATCH", c.BaseURL, bytes.NewBuffer(c.Data))
+				request.Header.Set("Content-Type", "application/json")
+				if err != nil {
+					log.Fatalf("%v", err)
+				}
 			default:
 				request, err = http.NewRequest("GET", c.BaseURL, nil)
 				if err != nil {
