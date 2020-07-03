@@ -190,9 +190,21 @@ Starting Load Test with 100000 requests using 125 concurrent users
 Example hitting a POST endpoint where POST json data is defined in a file:
 
 ```bash
-$ ./cassowary run -u http://localhost:8000/add-user -c 10 -n 1000 --post-file user.json
+$ ./cassowary run -u http://localhost:8000/add-user -c 10 -n 1000 --postfile user.json
 
 Starting Load Test with 1000 requests using 10 concurrent users
+
+[ omitted for brevity ]
+
+```
+
+### Load Test with PATCH Data  
+Example hitting a PATCH endpoint where PATCH json data is defined in a file:
+
+```bash
+$ ./cassowary run -u http://localhost:8000/add-user -c 5 -n 200 --patchfile user.json
+
+Starting Load Test with 200 requests using 5 concurrent users
 
 [ omitted for brevity ]
 

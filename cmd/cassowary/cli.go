@@ -160,6 +160,13 @@ func validateCLI(c *cli.Context) error {
 			return err
 		}
 		data = fileData
+	} else if c.String("patchfile") != "" {
+		httpMethod = "PATCH"
+		fileData, err := readFile(c.String("patchfile"))
+		if err != nil {
+			return err
+		}
+		data = fileData
 	} else {
 		httpMethod = "GET"
 	}
@@ -278,6 +285,10 @@ func runCLI(args []string) {
 				&cli.StringFlag{
 					Name:  "postfile",
 					Usage: "file containing data to POST (content type will default to application/json)",
+				},
+				&cli.StringFlag{
+					Name:  "patchfile",
+					Usage: "file containing data to PATCH (content type will default to application/json)",
 				},
 				&cli.StringFlag{
 					Name:  "putfile",
