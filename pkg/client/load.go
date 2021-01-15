@@ -106,7 +106,7 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			resp.Body.Close()
 		}
 
-		if c.DisableTerminalOutput != true {
+		if !c.DisableTerminalOutput {
 			c.Bar.Add(1)
 		}
 
@@ -170,7 +170,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 
 	c.Bar = progressbar.New(c.Requests)
 
-	if c.DisableTerminalOutput != true {
+	if !c.DisableTerminalOutput {
 		col := color.New(color.FgCyan).Add(color.Underline)
 		col.Printf("\nStarting Load Test with %d requests using %d concurrent users\n\n", c.Requests, c.ConcurrencyLevel)
 	}
@@ -232,7 +232,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	close(channel)
 
 	end := time.Since(start)
-	if c.DisableTerminalOutput != true {
+	if !c.DisableTerminalOutput {
 		fmt.Println(end)
 	}
 

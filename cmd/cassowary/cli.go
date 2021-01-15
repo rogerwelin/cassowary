@@ -19,11 +19,11 @@ import (
 
 var (
 	version             = "dev"
-	errConcurrencyLevel = errors.New("Error: Concurrency level cannot be set to: 0")
-	errRequestNo        = errors.New("Error: No. of request cannot be set to: 0")
-	errNotValidURL      = errors.New("Error: Not a valid URL. Must have the following format: http{s}://{host}")
-	errNotValidHeader   = errors.New("Error: Not a valid header value. Did you forget : ?")
-	errDurationValue    = errors.New("Error: Duration cannot be set to 0 or negative")
+	errConcurrencyLevel = errors.New("error: Concurrency level cannot be set to: 0")
+	errRequestNo        = errors.New("error: No. of request cannot be set to: 0")
+	errNotValidURL      = errors.New("error: Not a valid URL. Must have the following format: http{s}://{host}")
+	errNotValidHeader   = errors.New("error: Not a valid header value. Did you forget : ?")
+	errDurationValue    = errors.New("error: Duration cannot be set to 0 or negative")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -121,7 +121,7 @@ func validateCLI(c *cli.Context) error {
 		}
 	}
 
-	if client.IsValidURL(c.String("url")) == false {
+	if !client.IsValidURL(c.String("url")) {
 		return errNotValidURL
 	}
 
