@@ -193,6 +193,9 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		durationMS := c.Duration * 1000
 		nextTick := durationMS / c.Requests
 		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
+		if nextTick == 0 {
+			log.Fatalf("The combination of %v requests and %v(s) duration is invalid. Try raising the duration to a greater value", c.Requests, c.Duration)
+		}
 		done := make(chan bool)
 		iter := 0
 
