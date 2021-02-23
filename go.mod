@@ -10,4 +10,5 @@ require (
 	github.com/prometheus/client_golang v1.3.0
 	github.com/schollz/progressbar v1.0.0
 	github.com/urfave/cli/v2 v2.2.0
+	gonum.org/v1/plot v0.8.1
 )

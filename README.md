@@ -29,6 +29,7 @@ Toc
   * [Exporting Metrics to File](#exporting-metrics-to-file)
   * [Exporting Metrics to Prometheus](#exporting-metrics-to-prometheus)
   * [Exporting Metrics to Cloudwatch](#exporting-metrics-to-cloudwatch)
+  * [Histogram](#histogram)
   * [Load Test with POST Data](#load-test-with-post-data)
   * [Specifying a Duration](#specifying-a-duration-for-the-load-test)
   * [Adding HTTP Headers](#adding-http-headers)
@@ -46,9 +47,10 @@ Features
 - **CI Friendly**: Well-suited to be part of a CI pipeline step
 - **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
 - **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client
-- **Supports GET, POST & PUT** - POST and PUT data can be defined in a file
+- **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 - **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
+- **Visualizations** - Cassowary can export request data as a histogram in png format
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
@@ -185,6 +187,10 @@ Starting Load Test with 100000 requests using 125 concurrent users
 
 ```
 
+### Histogram  
+Supply the *--histogram* flag without a value to let cassowary compute and output a histogram in png format (hist.png in current dir) for the total duration of the requests in ms. Example: 
+
+<img src="https://i.imgur.com/VLEsVOY.png" width="300" height="300" />
 
 ### Load Test with POST Data  
 Example hitting a POST endpoint where POST json data is defined in a file:

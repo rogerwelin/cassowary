@@ -203,6 +203,7 @@ func validateCLI(c *cli.Context) error {
 		TLSConfig:         tlsConfig,
 		PromURL:           c.String("prompushgwurl"),
 		Cloudwatch:        c.Bool("cloudwatch"),
+		Histogram:         c.Bool("histogram"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
@@ -267,20 +268,24 @@ func runCLI(args []string) {
 					Aliases: []string{"prompushgwurl"},
 					Usage:   "specify prometheus push gateway url to send metrics (optional)",
 				},
-				&cli.BoolFlag{
-					Name:    "C",
-					Aliases: []string{"cloudwatch"},
-					Usage:   "enable to send metrics to AWS Cloudwatch",
-				},
 				&cli.StringFlag{
 					Name:    "H",
 					Aliases: []string{"header"},
 					Usage:   "add arbitrary header, eg. 'Host: www.example.com'",
 				},
 				&cli.BoolFlag{
+					Name:    "C",
+					Aliases: []string{"cloudwatch"},
+					Usage:   "enable to send metrics to AWS Cloudwatch",
+				},
+				&cli.BoolFlag{
 					Name:    "F",
 					Aliases: []string{"json-metrics"},
 					Usage:   "outputs metrics to a json file by setting flag to true",
+				},
+				&cli.BoolFlag{
+					Aliases: []string{"histogram"},
+					Usage:   "enable to generate a histogram as png",
 				},
 				&cli.StringFlag{
 					Name:  "postfile",
