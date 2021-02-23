@@ -24,6 +24,7 @@ type durationMetrics struct {
 	ServerProcessing float64
 	ContentTransfer  float64
 	StatusCode       int
+	TotalDuration    float64
 }
 
 func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
@@ -132,6 +133,8 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			out.TCPConn = float64(t3.Sub(t1) / time.Millisecond)
 		}
 
+		out.TotalDuration = out.DNSLookup + out.TCPConn + out.ServerProcessing + out.ContentTransfer
+
 		outPutChan <- out
 	}
 }
@@ -144,6 +147,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	var serverDur []float64
 	var transferDur []float64
 	var statusCodes []int
+	var totalDur []float64
 
 	tls, err := isTLS(c.BaseURL)
 	if err != nil {
@@ -252,6 +256,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		serverDur = append(serverDur, item.ServerProcessing)
 		transferDur = append(transferDur, item.ContentTransfer)
 		statusCodes = append(statusCodes, item.StatusCode)
+		totalDur = append(totalDur, item.TotalDuration)
 	}
 
 	// DNS
@@ -299,6 +304,11 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 			ContentTransferMedian: transferMedian,
 			ContentTransfer95p:    stringToFloat(transfer95),
 		},
+	}
+
+	// output histogram
+	if c.Histogram {
+		_ = c.PlotHistogram(totalDur)
 	}
 	return outPut, nil
 }

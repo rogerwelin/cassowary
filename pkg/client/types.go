@@ -19,6 +19,7 @@ type Cassowary struct {
 	ExportMetricsFile     string
 	PromExport            bool
 	Cloudwatch            bool
+	Histogram             bool
 	TLSConfig             *tls.Config
 	PromURL               string
 	RequestHeader         []string
