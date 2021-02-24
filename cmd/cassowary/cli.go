@@ -203,6 +203,7 @@ func validateCLI(c *cli.Context) error {
 		TLSConfig:         tlsConfig,
 		PromURL:           c.String("prompushgwurl"),
 		Cloudwatch:        c.Bool("cloudwatch"),
+		Boxplot:           c.Bool("boxplot"),
 		Histogram:         c.Bool("histogram"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
@@ -282,6 +283,11 @@ func runCLI(args []string) {
 					Name:    "F",
 					Aliases: []string{"json-metrics"},
 					Usage:   "outputs metrics to a json file by setting flag to true",
+				},
+				&cli.BoolFlag{
+					Name:    "b",
+					Aliases: []string{"boxplot"},
+					Usage:   "enable to generate a boxplot as png",
 				},
 				&cli.BoolFlag{
 					Aliases: []string{"histogram"},

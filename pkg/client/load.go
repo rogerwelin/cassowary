@@ -308,7 +308,16 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 
 	// output histogram
 	if c.Histogram {
-		_ = c.PlotHistogram(totalDur)
+		err := c.PlotHistogram(totalDur)
+		if err != nil {
+		}
+	}
+
+	// output boxplot
+	if c.Boxplot {
+		err := c.PlotBoxplot(totalDur)
+		if err != nil {
+		}
 	}
 	return outPut, nil
 }

@@ -13,7 +13,7 @@ func getBins(dataPoints int) int {
 	return b
 }
 
-// PlotHistogram blabla
+// PlotHistogram outputs a histogram png
 func (c *Cassowary) PlotHistogram(durations []float64) error {
 
 	bins := getBins(len(durations))
