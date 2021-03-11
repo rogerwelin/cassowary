@@ -7,7 +7,7 @@ Summary: Modern cross-platform HTTP load-testing tool written in Go
 License: MIT
 Group: Development/Tools
 URL: https://github.com/rogerwelin/cassowary
-Source0: https://github.com/rogerwelin/cassowary/releases/download/v%{version}/cassowary_%{version}_Linux_x86_64.tar.gz
+Source0: https://github.com/rogerwelin/cassowary/releases/download/v%{version}/cassowary_Linux_x86_64.tar.gz
 
 %description
 Modern cross-platform HTTP load-testing tool written in Go

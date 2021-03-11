@@ -42,10 +42,7 @@ func (c *Cassowary) PlotHistogram(durations []float64) error {
 		return err
 	}
 
-	p, err := plot.New()
-	if err != nil {
-		return err
-	}
+	p := plot.New()
 
 	p.Add(h)
 	p.Title.Text = "Distribution"
