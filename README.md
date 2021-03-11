@@ -30,6 +30,7 @@ Toc
   * [Exporting Metrics to Prometheus](#exporting-metrics-to-prometheus)
   * [Exporting Metrics to Cloudwatch](#exporting-metrics-to-cloudwatch)
   * [Histogram](#histogram)
+  * [Boxplot](#boxplot)
   * [Load Test with POST Data](#load-test-with-post-data)
   * [Specifying a Duration](#specifying-a-duration-for-the-load-test)
   * [Adding HTTP Headers](#adding-http-headers)
@@ -50,7 +51,7 @@ Features
 - **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file
 - **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
 - **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
-- **Visualizations** - Cassowary can export request data as a histogram in png format
+- **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
@@ -66,6 +67,13 @@ You can install **cassowary** using the Homebrew package manager on Mac:
 
 ```bash
 $ brew update && brew install cassowary
+```
+
+### Docker  
+You can run **cassowary** directly by using it's Docker image:  
+
+```bash
+$ docker run rogerw/cassowary:v0.14.0 cassowary run -u http://www.example.com -c 1 -n 10
 ```
 
 ### Nix/NixOS
@@ -191,6 +199,9 @@ Starting Load Test with 100000 requests using 125 concurrent users
 Supply the *--histogram* flag without a value to let cassowary compute and output a histogram in png format (hist.png in current dir) for the total duration of the requests in ms. Example: 
 
 <img src="https://i.imgur.com/VLEsVOY.png" width="300" height="300" />
+
+### Boxplot  
+Supply the *--boxplot* flag without a value to tell cassowary to generate a boxplot visualization in png format (boxplot.png in current dir) for the total duration of the requests in ms
 
 ### Load Test with POST Data  
 Example hitting a POST endpoint where POST json data is defined in a file:
