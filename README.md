@@ -69,6 +69,13 @@ You can install **cassowary** using the Homebrew package manager on Mac:
 $ brew update && brew install cassowary
 ```
 
+### Docker  
+You can run **cassowary** directly by using it's Docker image:  
+
+```bash
+$ docker run rogerw/cassowary:v0.14.0 cassowary run -u http://www.example.com -c 1 -n 10
+```
+
 ### Nix/NixOS
 
 Cassowary can be installed via the [Nix](https://nixos.org) package manager.
