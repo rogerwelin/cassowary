@@ -36,6 +36,7 @@ Toc
   * [Adding HTTP Headers](#adding-http-headers)
   * [Disabling HTTP keep-alive](#disabling-http-keep-alive)
   * [x509 Authentication](#x509-authentication)
+  * [Distributed Load Testing](#distributed-load-testing)
 - [Importing cassowary as a module](#importing-cassowary-as-a-modulelibrary)
 - [Versioning](#versioning)
 - [Contributing](#contributing)
@@ -286,6 +287,32 @@ Starting Load Test with 1000 requests using 10 concurrent users
 [ omitted for brevity ]
 
 ```
+
+### Distributed Load Testing  
+You can run cassowary in a distributed way if you need to scale up the load testing on more than one machine. Simplest way to do that is having access to a Kubernetes cluster. Use the batch type in Kubernetes and in the *spec.paralellism* key you can specify how many instances of cassowary you want to run simultaneously:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cassowary
+spec:
+  parallelism: 10
+  template:
+    spec:
+      containers:
+      - command: ["cassowary", "run", "-u", "http://my-microservice.com:8000", "-c", "1", "-n", "10"]
+        image: rogerw/cassowary:v0.14.0
+        name: cassowary
+      restartPolicy: Never
+```
+
+Just apply this yaml like so:
+
+```bash
+$ kubectl apply -f cassowary.yaml
+```
+
 
 Importing cassowary as a module/library
 --------
