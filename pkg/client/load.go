@@ -13,6 +13,7 @@ import (
 	"net/http/httptrace"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -498,6 +499,9 @@ func (c *Cassowary) Coordinate() (ResultMetrics, map[string]ResultMetrics, error
 		}()
 	}
 
+	var wgStat sync.WaitGroup
+	wgStat.Add(1)
+
 	go func() {
 		var w *bufio.Writer
 		var sb bytes.Buffer
@@ -506,6 +510,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, map[string]ResultMetrics, error
 			w = bufio.NewWriter(fo)
 			w.WriteString("timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect\n")
 		}
+		defer wgStat.Done()
 
 		for item := range channel {
 			s := stats[item.Group]
@@ -628,6 +633,8 @@ func (c *Cassowary) Coordinate() (ResultMetrics, map[string]ResultMetrics, error
 	if !c.DisableTerminalOutput {
 		fmt.Println(end)
 	}
+
+	wgStat.Wait()
 
 	for _, g := range c.Groups {
 		if g.ConcurrencyLevel < 1 {
