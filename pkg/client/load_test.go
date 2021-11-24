@@ -60,6 +60,7 @@ func TestLoadCoordinate(t *testing.T) {
 			ElapsedStats:      metrics.ElapsedStats,
 			TCPStats:          metrics.TCPStats,
 			ProcessingStats:   metrics.ProcessingStats,
+			ContentStats:      metrics.ContentStats,
 		},
 	}
 	assert.EqualValues(t, metricsGroupsWant, metricsGroups)
@@ -152,7 +153,7 @@ func TestLoadCoordinateURLIterator(t *testing.T) {
 				URLIterator:      it,
 			},
 			{
-				Name:             "group_1",
+				Name:             "group_2",
 				ConcurrencyLevel: 1,
 				Requests:         10,
 				FileMode:         true,
@@ -163,7 +164,7 @@ func TestLoadCoordinateURLIterator(t *testing.T) {
 	}
 	metrics, metricsGroups, err := cass.Coordinate()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if metrics.TotalRequests != cass.Groups[0].Requests+cass.Groups[1].Requests {
@@ -190,16 +191,30 @@ func TestLoadCoordinateURLIterator(t *testing.T) {
 
 	metricsGroupsWant := map[string]ResultMetrics{
 		"group_1": {
-			Name: "group_1", BaseURL: srv.URL, TotalRequests: metrics.TotalRequests, FailedRequests: 0,
+			Name: "group_1", BaseURL: srv.URL, TotalRequests: 32, FailedRequests: 0,
 			BodySize:    metrics.BodySize,
-			RespSuccess: map[string]int{"200": metrics.TotalRequests},
+			RespSuccess: map[string]int{"200": 32},
 			RespFailed:  map[string]int{},
 			RespSize:    stats{Min: 2, Max: 2, Mean: 2, Median: 2, P95: 2, P99: 2},
 			// flapping values
-			RequestsPerSecond: metrics.RequestsPerSecond,
-			ElapsedStats:      metrics.ElapsedStats,
-			TCPStats:          metrics.TCPStats,
-			ProcessingStats:   metrics.ProcessingStats,
+			RequestsPerSecond: metricsGroups["group_1"].RequestsPerSecond,
+			ElapsedStats:      metricsGroups["group_1"].ElapsedStats,
+			TCPStats:          metricsGroups["group_1"].TCPStats,
+			ProcessingStats:   metricsGroups["group_1"].ProcessingStats,
+			ContentStats:      metricsGroups["group_1"].ContentStats,
+		},
+		"group_2": {
+			Name: "group_2", BaseURL: srv.URL, TotalRequests: 10, FailedRequests: 0,
+			BodySize:    metrics.BodySize,
+			RespSuccess: map[string]int{"200": 10},
+			RespFailed:  map[string]int{},
+			RespSize:    stats{Min: 2, Max: 2, Mean: 2, Median: 2, P95: 2, P99: 2},
+			// flapping values
+			RequestsPerSecond: metricsGroups["group_2"].RequestsPerSecond,
+			ElapsedStats:      metricsGroups["group_2"].ElapsedStats,
+			TCPStats:          metricsGroups["group_2"].TCPStats,
+			ProcessingStats:   metricsGroups["group_2"].ProcessingStats,
+			ContentStats:      metricsGroups["group_2"].ContentStats,
 		},
 	}
 	assert.EqualValues(t, metricsGroupsWant, metricsGroups)
@@ -274,10 +289,15 @@ func TestLoadCoordinateURLIteratorWithValidator(t *testing.T) {
 	metricsGroupsWant := map[string]ResultMetrics{
 		"default": {
 			Name: "default", BaseURL: srv.URL, TotalRequests: metrics.TotalRequests, FailedRequests: metrics.TotalRequests,
-			RequestsPerSecond: metrics.RequestsPerSecond, // flapping value
-			BodySize:          metrics.BodySize,
-			RespSuccess:       map[string]int{},
-			RespFailed:        map[string]int{"503": metrics.TotalRequests},
+			BodySize:    metrics.BodySize,
+			RespSuccess: map[string]int{},
+			RespFailed:  map[string]int{"503": metrics.TotalRequests},
+			// flapping values
+			RequestsPerSecond: metrics.RequestsPerSecond,
+			ElapsedStats:      metrics.ElapsedStats,
+			TCPStats:          metrics.TCPStats,
+			ProcessingStats:   metrics.ProcessingStats,
+			ContentStats:      metrics.ContentStats,
 		},
 	}
 	assert.EqualValues(t, metricsGroupsWant, metricsGroups)

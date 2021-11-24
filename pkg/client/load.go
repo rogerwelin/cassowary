@@ -82,28 +82,28 @@ func runLoadTest(c *Cassowary, outPutChan chan<- durationMetrics, g *QueryGroup)
 			request.Header.Add(g.RequestHeader[0], g.RequestHeader[1])
 		}
 
-		var t0, t1, t2, t3, t4, t5, t6 time.Time
+		var t0, t1, t2, t3, t4, t5, t6 int64
 
 		trace := &httptrace.ClientTrace{
-			DNSStart: func(_ httptrace.DNSStartInfo) { t0 = time.Now() },
-			DNSDone:  func(_ httptrace.DNSDoneInfo) { t1 = time.Now() },
+			DNSStart: func(_ httptrace.DNSStartInfo) { t0 = time.Now().UnixNano() },
+			DNSDone:  func(_ httptrace.DNSDoneInfo) { t1 = time.Now().UnixNano() },
 			ConnectStart: func(_, _ string) {
-				if t1.IsZero() {
+				if t1 == 0 {
 					// connecting directly to IP
-					t1 = time.Now()
+					t1 = time.Now().UnixNano()
 				}
 			},
 			ConnectDone: func(net, addr string, err error) {
 				if err != nil {
 					log.Fatalf("unable to connect to host %v: %v", addr, err)
 				}
-				t2 = time.Now()
+				t2 = time.Now().UnixNano()
 
 			},
-			GotConn:              func(_ httptrace.GotConnInfo) { t3 = time.Now() },
-			GotFirstResponseByte: func() { t4 = time.Now() },
-			TLSHandshakeStart:    func() { t5 = time.Now() },
-			TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { t6 = time.Now() },
+			GotConn:              func(_ httptrace.GotConnInfo) { t3 = time.Now().UnixNano() },
+			GotFirstResponseByte: func() { t4 = time.Now().UnixNano() },
+			TLSHandshakeStart:    func() { t5 = time.Now().UnixNano() },
+			TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { t6 = time.Now().UnixNano() },
 		}
 
 		request = request.WithContext(httptrace.WithClientTrace(context.Background(), trace))
@@ -129,8 +129,8 @@ func runLoadTest(c *Cassowary, outPutChan chan<- durationMetrics, g *QueryGroup)
 		}
 
 		// Body fully read here
-		t7 := time.Now()
-		if t0.IsZero() {
+		t7 := time.Now().UnixNano()
+		if t0 == 0 {
 			// we skipped DNS
 			t0 = t1
 		}
@@ -151,15 +151,15 @@ func runLoadTest(c *Cassowary, outPutChan chan<- durationMetrics, g *QueryGroup)
 		}
 
 		out := durationMetrics{
-			Started:   t7,
+			Started:   time.Unix(t7, 0),
 			Group:     g.Name,
 			Label:     u.Name,
 			Method:    u.Method,
 			URL:       u.URL,
-			DNSLookup: float64(t1.Sub(t0) / time.Millisecond), // dns lookup
+			DNSLookup: float64((t1 - t0) / int64(time.Millisecond)), // dns lookup
 			//TCPConn:          float64(t3.Sub(t1) / time.Millisecond), // tcp connection
-			ServerProcessing: float64(t4.Sub(t3) / time.Millisecond), // server processing
-			ContentTransfer:  float64(t7.Sub(t4) / time.Millisecond), // content transfer
+			ServerProcessing: float64((t4 - t3) / int64(time.Millisecond)), // server processing
+			ContentTransfer:  float64((t7 - t4) / int64(time.Millisecond)), // content transfer
 			StatusCode:       statusCode,
 			BodySize:         len(u.Data),
 			ResponseSize:     respSize,
@@ -167,13 +167,13 @@ func runLoadTest(c *Cassowary, outPutChan chan<- durationMetrics, g *QueryGroup)
 			ResponseType:     contentType,
 		}
 
-		if !t1.IsZero() {
+		if t1 != 0 {
 			// new connection
 			if c.IsTLS {
-				out.TCPConn = float64(t2.Sub(t1) / time.Millisecond)
-				out.TLSHandshake = float64(t6.Sub(t5) / time.Millisecond) // tls handshake
+				out.TCPConn = float64((t2 - t1) / int64(time.Millisecond))
+				out.TLSHandshake = float64((t6 - t5) / int64(time.Millisecond)) // tls handshake
 			} else {
-				out.TCPConn = float64(t3.Sub(t1) / time.Millisecond)
+				out.TCPConn = float64((t3 - t1) / int64(time.Millisecond))
 			}
 		}
 
@@ -332,6 +332,14 @@ func (c *Cassowary) Coordinate() (ResultMetrics, map[string]ResultMetrics, error
 		return ResultMetrics{}, map[string]ResultMetrics{}, err
 	}
 	c.IsTLS = tls
+
+	groupCheck := map[string]bool{}
+	for i := range c.Groups {
+		if _, ok := groupCheck[c.Groups[i].Name]; ok {
+			return ResultMetrics{}, map[string]ResultMetrics{}, fmt.Errorf("duplicate group: " + c.Groups[i].Name)
+		}
+		groupCheck[c.Groups[i].Name] = true
+	}
 
 	c.Client = &http.Client{
 		Timeout: time.Second * time.Duration(c.Timeout),
