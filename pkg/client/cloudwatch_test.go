@@ -22,15 +22,21 @@ func TestPutCloudwatchMetrics(t *testing.T) {
 		FailedRequests:    1,
 		TotalRequests:     100,
 		RequestsPerSecond: 100.10,
-		TCPStats: tcpStats{
-			TCPMean:   10.0,
-			TCPMedian: 10.0,
-			TCP95p:    10.0,
+		TCPStats: stats{
+			Min:    9.0,
+			Max:    10.0,
+			Mean:   10.0,
+			Median: 10.0,
+			P95:    10.0,
+			P99:    10.0,
 		},
-		ProcessingStats: serverProcessingStats{
-			ServerProcessingMean:   1.0,
-			ServerProcessingMedian: 1.0,
-			ServerProcessing95p:    1.0,
+		ProcessingStats: stats{
+			Min:    1.0,
+			Max:    1.0,
+			Mean:   1.0,
+			Median: 1.0,
+			P95:    1.0,
+			P99:    1.0,
 		},
 	}
 	mockSvc := &mockCloudWatchClient{}

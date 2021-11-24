@@ -36,15 +36,15 @@ func TestPromGwPush(t *testing.T) {
 		FailedRequests:    1,
 		TotalRequests:     100,
 		RequestsPerSecond: 100.10,
-		TCPStats: tcpStats{
-			TCPMean:   10.0,
-			TCPMedian: 10.0,
-			TCP95p:    10.0,
+		TCPStats: stats{
+			Mean:   10.0,
+			Median: 10.0,
+			P95:    10.0,
 		},
-		ProcessingStats: serverProcessingStats{
-			ServerProcessingMean:   1.0,
-			ServerProcessingMedian: 1.0,
-			ServerProcessing95p:    1.0,
+		ProcessingStats: stats{
+			Mean:   1.0,
+			Median: 1.0,
+			P95:    1.0,
 		},
 	}
 

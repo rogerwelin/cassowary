@@ -3,16 +3,14 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/fatih/color"
 	"github.com/rogerwelin/cassowary/pkg/client"
 	"github.com/urfave/cli/v2"
 )
@@ -26,48 +24,21 @@ var (
 	errDurationValue    = errors.New("error: Duration cannot be set to 0 or negative")
 )
 
-func outPutResults(metrics client.ResultMetrics) {
-	printf(summaryTable,
-		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCPMean)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCPMedian)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.TCPStats.TCP95p)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessingMean)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessingMedian)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ProcessingStats.ServerProcessing95p)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransferMean)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransferMedian)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.ContentStats.ContentTransfer95p)),
-		color.CyanString(strconv.Itoa(metrics.TotalRequests)),
-		color.CyanString(strconv.Itoa(metrics.FailedRequests)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.DNSMedian)),
-		color.CyanString(fmt.Sprintf("%.2f", metrics.RequestsPerSecond)),
-	)
-}
-
-func outPutJSON(fileName string, metrics client.ResultMetrics) error {
-	if fileName == "" {
-		// default filename for json metrics output.
-		fileName = "out.json"
-	}
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	enc := json.NewEncoder(f)
-	return enc.Encode(metrics)
-}
-
 func runLoadTest(c *client.Cassowary) error {
-	metrics, err := c.Coordinate()
+	metrics, metricsGroup, err := c.Coordinate()
 	if err != nil {
 		return err
 	}
-	outPutResults(metrics)
+
+	for _, g := range c.Groups {
+		if m, ok := metricsGroup[g.Name]; ok {
+			client.OutPutResults(m)
+		}
+	}
+	client.OutPutResults(metrics)
 
 	if c.ExportMetrics {
-		return outPutJSON(c.ExportMetricsFile, metrics)
+		return client.OutPutJSON(c.ExportMetricsFile, metrics, metricsGroup)
 	}
 
 	if c.PromExport {
@@ -98,8 +69,9 @@ func validateCLI(c *cli.Context) error {
 	var header []string
 	var httpMethod string
 	var data []byte
-	duration := 0
+	var duration time.Duration
 	var urlSuffixes []string
+	var statFile string
 	fileMode := false
 
 	if c.Int("concurrency") == 0 {
@@ -112,7 +84,7 @@ func validateCLI(c *cli.Context) error {
 
 	if c.String("duration") != "" {
 		var err error
-		duration, err = strconv.Atoi(c.String("duration"))
+		duration, err = time.ParseDuration(c.String("duration"))
 		if err != nil {
 			return err
 		}
@@ -145,6 +117,8 @@ func validateCLI(c *cli.Context) error {
 		}
 		fileMode = true
 	}
+
+	statFile = c.String("stat-file")
 
 	if c.String("postfile") != "" {
 		httpMethod = "POST"
@@ -193,12 +167,7 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	cass := &client.Cassowary{
-		FileMode:          fileMode,
 		BaseURL:           c.String("url"),
-		ConcurrencyLevel:  c.Int("concurrency"),
-		Requests:          c.Int("requests"),
-		RequestHeader:     header,
-		Duration:          duration,
 		PromExport:        prometheusEnabled,
 		TLSConfig:         tlsConfig,
 		PromURL:           c.String("prompushgwurl"),
@@ -207,11 +176,22 @@ func validateCLI(c *cli.Context) error {
 		Histogram:         c.Bool("histogram"),
 		ExportMetrics:     c.Bool("json-metrics"),
 		ExportMetricsFile: c.String("json-metrics-file"),
+		StatFile:          statFile,
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 		Timeout:           c.Int("timeout"),
-		HTTPMethod:        httpMethod,
-		URLPaths:          urlSuffixes,
-		Data:              data,
+		Duration:          duration,
+		Groups: []client.QueryGroup{
+			{
+				Name:             "default",
+				Method:           httpMethod,
+				URLPaths:         urlSuffixes,
+				Data:             data,
+				FileMode:         fileMode,
+				ConcurrencyLevel: c.Int("concurrency"),
+				Requests:         c.Int("requests"),
+				RequestHeader:    header,
+			},
+		},
 	}
 
 	return runLoadTest(cass)
@@ -256,7 +236,7 @@ func runCLI(args []string) {
 				&cli.StringFlag{
 					Name:    "d",
 					Aliases: []string{"duration"},
-					Usage:   "set the duration in seconds of the load test (example: do 100 requests in a duration of 30s)",
+					Usage:   "set the duration of the load test (example: do 100 requests in a duration of 30s)",
 				},
 				&cli.IntFlag{
 					Name:    "t",
@@ -308,6 +288,10 @@ func runCLI(args []string) {
 				&cli.StringFlag{
 					Name:  "json-metrics-file",
 					Usage: "outputs metrics to a custom json filepath, if json-metrics is set to true",
+				},
+				&cli.StringFlag{
+					Name:  "stat-file",
+					Usage: "output file for individual query statistics",
 				},
 				&cli.BoolFlag{
 					Name:  "disable-keep-alive",
