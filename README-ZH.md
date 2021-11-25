@@ -182,8 +182,13 @@ import (
 func main() {
 	cass := &client.Cassowary{
 		BaseURL:               "http://www.example.com",
-		ConcurrencyLevel:      1,
-		Requests:              10,
+		Groups: []client.QueryGroup{
+			{
+				Name:             "default",
+                ConcurrencyLevel: 1,
+				Requests:         10,
+			},
+		},
 		DisableTerminalOutput: true,
 	}
 	metrics, err := cass.Coordinate()

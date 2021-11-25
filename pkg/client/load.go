@@ -351,15 +351,6 @@ func (c *Cassowary) Coordinate() (ResultMetrics, map[string]ResultMetrics, error
 		},
 	}
 
-	if c.Requests > 0 && c.ConcurrencyLevel > 0 {
-		c.Groups = append(c.Groups, QueryGroup{
-			ConcurrencyLevel: c.ConcurrencyLevel,
-			Requests:         c.Requests,
-			RequestHeader:    c.RequestHeader,
-			URLPaths:         []string{c.BaseURL},
-		})
-	}
-
 	concurrency := 0
 	statInit(&statTotal)
 	for n := range c.Groups {
