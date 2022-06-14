@@ -1,7 +1,7 @@
 %global bindir /usr/local/sbin
 
 Name: cassowary
-Version: 0.10.0
+Version: 0.14.0
 Release: 1
 Summary: Modern cross-platform HTTP load-testing tool written in Go
 License: MIT
@@ -30,3 +30,5 @@ Modern cross-platform HTTP load-testing tool written in Go
 %changelog
 * Fri Jan 24 2020 <roger.welin@icloud.com>
 - Cassowary spec file
+* Mon Jun 13 2022 <ericchou19831101@msn.com>
+- Uplift release version
