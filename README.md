@@ -80,7 +80,7 @@ $ docker run rogerw/cassowary:v0.14.0 cassowary run -u http://www.example.com -c
 For local development:
 
 ```bash
-$ env GOOS=linux go build -o dist/docker
+$ GOOS=linux go build -o dist/docker/cassowary cmd/cassowary/*.go
 $ docker build -f dist/docker/Dockerfile -t test_cassowary dist/docker
 $ docker run test_cassowary -u http://www.example.com -c 1 -n 10
 ```
