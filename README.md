@@ -74,7 +74,7 @@ $ brew update && brew install cassowary
 You can run **cassowary** directly by using its official Docker image:  
 
 ```bash
-$ docker run rogerw/cassowary:v0.14.0 cassowary run -u http://www.example.com -c 1 -n 10
+$ docker run rogerw/cassowary:v0.14.1 -u http://www.example.com -c 1 -n 10
 ```
 
 For local development:
@@ -310,8 +310,8 @@ spec:
   template:
     spec:
       containers:
-      - command: ["cassowary", "run", "-u", "http://my-microservice.com:8000", "-c", "1", "-n", "10"]
-        image: rogerw/cassowary:v0.14.0
+      - command: ["-u", "http://my-microservice.com:8000", "-c", "1", "-n", "10"]
+        image: rogerw/cassowary:v0.14.1
         name: cassowary
       restartPolicy: Never
 ```
