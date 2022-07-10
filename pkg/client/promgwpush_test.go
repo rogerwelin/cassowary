@@ -52,8 +52,8 @@ func TestPromGwPush(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if lastPath != "/metrics/job/cassowary_load_test/url/" {
-		t.Errorf("Wanted %s but got %s", "/metrics/job/cassowary_load_test/url/", lastPath)
+	if lastPath != "/metrics/job/cassowary_load_test/url@base64/=" {
+		t.Errorf("Wanted %s but got %s", "/metrics/job/cassowary_load_test/url@base64/=", lastPath)
 	}
 	if lastMethod != "PUT" {
 		t.Errorf("Wanted %s but got %s", "PUT", lastMethod)
