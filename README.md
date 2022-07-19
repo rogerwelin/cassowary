@@ -45,14 +45,14 @@ Toc
 Features  
 --------
 
-- **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)
-- **CI Friendly**: Well-suited to be part of a CI pipeline step
-- **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
-- **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client
-- **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file
-- **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
-- **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
-- **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format
+📌 &nbsp; **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)  
+📌 &nbsp;  **CI Friendly**: Well-suited to be part of a CI pipeline step  
+📌 &nbsp; **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file  
+📌  &nbsp; **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client  
+📌  &nbsp; **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file  
+📌  &nbsp; **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows  
+📌  &nbsp; **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app  
+📌 &nbsp; **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format  
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
