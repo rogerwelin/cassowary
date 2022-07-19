@@ -1,13 +1,13 @@
 <p align="center"><a href="https://github.com/rogerwelin/cassowary"><img src="cass-logo.png" alt="cassowary"></a></p>
 <p align="center">
-  <a href="https://goreportcard.com/badge/github.com/rogerwelin/cassowary"><img src="https://goreportcard.com/badge/github.com/rogerwelin/cassowary" alt="Go Report Card"></a>
-  <a href="https://travis-ci.org/rogerwelin/cassowary"><img src="https://travis-ci.org/rogerwelin/cassowary.svg?branch=master" alt="Build status"></a>
-  <a href="https://github.com/avelino/awesome-go"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Go"></a>
-  <a href="https://github.com/rogerwelin/cassowary/blob/master/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/rogerwelin/cassowary" alt="Go version"></a>
-  <a href="https://github.com/rogerwelin/cassowary/releases"><img src="https://img.shields.io/github/v/release/rogerwelin/cassowary.svg" alt="Current Release"></a>
-  <a href="https://godoc.org/github.com/rogerwelin/cassowary"><img src="https://godoc.org/github.com/rogerwelin/cassowary?status.svg" alt="godoc"></a>
-  <a href="https://gocover.io/github.com/rogerwelin/cassowary/pkg/client"><img src="https://gocover.io/_badge/github.com/rogerwelin/cassowary/pkg/client" alt="Coverage"></a>
-  <a href="https://github.com/rogerwelin/cassowary/blob/master/LICENSE"><img src="https://img.shields.io/github/license/rogerwelin/cassowary" alt="License"></a>
+  <a href="https://goreportcard.com/badge/github.com/rogerwelin/cassowary"><img src="https://goreportcard.com/badge/github.com/rogerwelin/cassowary?style=for-the-badge&logo=go" alt="Go Report Card"></a>
+  <a href="https://github.com/rogerwelin/cassowary/actions/workflows/pullrequest.yaml"><img src="https://img.shields.io/github/workflow/status/rogerwelin/cassowary/Test?style=for-the-badge&logo=github" alt="Build status"></a>
+  <a href="https://github.com/avelino/awesome-go"><img src="https://awesome.re/mentioned-badge.svg" height="28" alt="Mentioned in Awesome Go"></a>
+  <a href="https://github.com/rogerwelin/cassowary/blob/master/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/rogerwelin/cassowary?style=for-the-badge&logo=go" alt="Go version"></a>
+  <a href="https://github.com/rogerwelin/cassowary/releases"><img src="https://img.shields.io/github/v/release/rogerwelin/cassowary?style=for-the-badge&logo=github&color=orange" alt="Current Release"></a>
+  <a href="https://godoc.org/github.com/rogerwelin/cassowary"><img src="https://godoc.org/github.com/rogerwelin/cassowary?status.svg" height="28" alt="godoc"></a>
+  <a href="https://gocover.io/github.com/rogerwelin/cassowary/pkg/client"><img src="https://gocover.io/_badge/github.com/rogerwelin/cassowary/pkg/client" height="28" alt="Coverage"></a>
+  <a href="https://github.com/rogerwelin/cassowary/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-orange?style=for-the-badge" alt="License"></a>
 </p>
 
 
@@ -45,14 +45,14 @@ Toc
 Features  
 --------
 
-- **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)
-- **CI Friendly**: Well-suited to be part of a CI pipeline step
-- **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file
-- **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client
-- **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file
-- **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows
-- **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app
-- **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format
+📌 &nbsp; **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)  
+📌 &nbsp;  **CI Friendly**: Well-suited to be part of a CI pipeline step  
+📌 &nbsp; **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file  
+📌  &nbsp; **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client  
+📌  &nbsp; **Supports GET, POST, PUT & PATCH** - POST, PUT and PATCH data can be defined in a file  
+📌  &nbsp; **Cross Platform**: One single pre-built binary for Linux, Mac OSX and Windows  
+📌  &nbsp; **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app  
+📌 &nbsp; **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format  
 
 <img src="https://i.imgur.com/geJykYH.gif" />
 
