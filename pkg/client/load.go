@@ -248,7 +248,10 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	var w *csv.Writer
 
 	if c.RawOutput {
-		csvFile, _ := os.Create("raw.csv")
+		csvFile, err := os.Create("raw.csv")
+		if err != nil {
+			return ResultMetrics{}, err
+		}
 		w = csv.NewWriter(csvFile)
 		headerInfo := structNames(&durationMetrics{})
 		w.Write(headerInfo)
