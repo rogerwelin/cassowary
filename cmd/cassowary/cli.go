@@ -206,6 +206,7 @@ func validateCLI(c *cli.Context) error {
 		Boxplot:           c.Bool("boxplot"),
 		Histogram:         c.Bool("histogram"),
 		ExportMetrics:     c.Bool("json-metrics"),
+		RawOutput:         c.Bool("raw-output"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 		Timeout:           c.Int("timeout"),
@@ -220,10 +221,11 @@ func validateCLI(c *cli.Context) error {
 func runCLI(args []string) {
 	app := cli.NewApp()
 	app.Name = "cassowary - 學名"
+	setCustomCLITemplate(app)
 	app.HelpName = "cassowary"
 	app.UsageText = "cassowary [command] [command options] [arguments...]"
 	app.EnableBashCompletion = true
-	app.Usage = ""
+	app.Usage = "Modern cross-platform HTTP load-testing tool"
 	app.Version = version
 	app.Commands = []*cli.Command{
 		{
@@ -278,6 +280,11 @@ func runCLI(args []string) {
 					Name:    "C",
 					Aliases: []string{"cloudwatch"},
 					Usage:   "enable to send metrics to AWS Cloudwatch",
+				},
+				&cli.BoolFlag{
+					Name:    "R",
+					Aliases: []string{"raw-output"},
+					Usage:   "enable to export raw per-request metrics",
 				},
 				&cli.BoolFlag{
 					Name:    "F",
@@ -335,4 +342,41 @@ func runCLI(args []string) {
 		fmt.Println(err)
 		os.Exit(0)
 	}
+}
+
+func setCustomCLITemplate(c *cli.App) {
+	whiteBold := color.New(color.Bold).SprintfFunc()
+	whiteUnderline := color.New(color.Bold).Add(color.Underline).SprintfFunc()
+	cyan := color.New(color.FgCyan).SprintFunc()
+
+	c.CustomAppHelpTemplate = fmt.Sprintf(` %s:
+		{{.Name}}{{if .Usage}} - {{.Usage}}{{end}}{{if .Description}}
+
+	 DESCRIPTION:
+		{{.Description | nindent 3 | trim}}{{end}}{{if len .Authors}}
+
+	 AUTHOR{{with $length := len .Authors}}{{if ne 1 $length}}S{{end}}{{end}}:
+		{{range $index, $author := .Authors}}{{if $index}}
+		{{end}}{{$author}}{{end}}{{end}}{{if .VisibleCommands}}
+
+ %s:{{range .VisibleCategories}}{{if .Name}}
+	{{.Name}}:{{range .VisibleCommands}}
+	  {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{else}}{{range .VisibleCommands}}
+	{{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+
+ %s:
+	{{range $index, $option := .VisibleFlags}}{{if $index}}
+	{{end}}{{$option}}{{end}}{{end}}{{if .Copyright}}
+
+ COPYRIGHT:
+	{{.Copyright}}{{end}}
+
+	%s
+	Example running cassowary against a target with 100 requests using 10 concurrent users
+	  %s
+  `, whiteBold("NAME"),
+		whiteBold("COMMANDS"),
+		whiteBold("GLOBAL OPTIONS"),
+		whiteUnderline("Example"),
+		cyan("$ cassowary run -u http://www.example.com -c 10 -n 100"))
 }
