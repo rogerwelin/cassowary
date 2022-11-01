@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptrace"
+	"os"
 	"sync"
 	"time"
 
@@ -243,7 +245,22 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		fmt.Println(end)
 	}
 
+	var w *csv.Writer
+
+	if c.RawOutput {
+		csvFile, _ := os.Create("raw.csv")
+		w = csv.NewWriter(csvFile)
+		headerInfo := structNames(&durationMetrics{})
+		w.Write(headerInfo)
+		defer csvFile.Close()
+		defer w.Flush()
+	}
+
 	for item := range channel {
+		if c.RawOutput {
+			itemSlice := toSlice(item)
+			w.Write(itemSlice)
+		}
 		if item.DNSLookup != 0 {
 			dnsDur = append(dnsDur, item.DNSLookup)
 		}
@@ -310,6 +327,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	if c.Histogram {
 		err := c.PlotHistogram(totalDur)
 		if err != nil {
+			fmt.Println(err)
 		}
 	}
 
@@ -317,6 +335,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	if c.Boxplot {
 		err := c.PlotBoxplot(totalDur)
 		if err != nil {
+			fmt.Println(err)
 		}
 	}
 	return outPut, nil

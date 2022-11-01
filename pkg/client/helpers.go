@@ -1,7 +1,9 @@
 package client
 
 import (
+	"fmt"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -55,4 +57,26 @@ func generateSuffixes(src []string, length int) []string {
 		urls = append(urls, src[i%srcLength])
 	}
 	return urls
+}
+
+func toSlice(in durationMetrics) []string {
+	s := []string{
+		fmt.Sprintf("%f", in.DNSLookup),
+		fmt.Sprintf("%f", in.TCPConn),
+		fmt.Sprintf("%f", in.TLSHandshake),
+		fmt.Sprintf("%f", in.ServerProcessing),
+		fmt.Sprintf("%f", in.ContentTransfer),
+		strconv.Itoa(in.StatusCode),
+		fmt.Sprintf("%f", in.TotalDuration),
+	}
+	return s
+}
+
+func structNames(a *durationMetrics) []string {
+	names := []string{}
+	val := reflect.ValueOf(a).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		names = append(names, val.Type().Field(i).Name)
+	}
+	return names
 }

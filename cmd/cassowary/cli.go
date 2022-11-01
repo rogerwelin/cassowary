@@ -206,6 +206,7 @@ func validateCLI(c *cli.Context) error {
 		Boxplot:           c.Bool("boxplot"),
 		Histogram:         c.Bool("histogram"),
 		ExportMetrics:     c.Bool("json-metrics"),
+		RawOutput:         c.Bool("raw-output"),
 		ExportMetricsFile: c.String("json-metrics-file"),
 		DisableKeepAlive:  c.Bool("disable-keep-alive"),
 		Timeout:           c.Int("timeout"),
@@ -278,6 +279,11 @@ func runCLI(args []string) {
 					Name:    "C",
 					Aliases: []string{"cloudwatch"},
 					Usage:   "enable to send metrics to AWS Cloudwatch",
+				},
+				&cli.BoolFlag{
+					Name:    "R",
+					Aliases: []string{"raw-output"},
+					Usage:   "enable to export raw per-request metrics",
 				},
 				&cli.BoolFlag{
 					Name:    "F",

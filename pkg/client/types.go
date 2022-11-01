@@ -11,6 +11,7 @@ import (
 type Cassowary struct {
 	FileMode              bool
 	IsTLS                 bool
+	RawOutput             bool
 	BaseURL               string
 	ConcurrencyLevel      int
 	Requests              int
