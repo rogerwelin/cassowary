@@ -54,9 +54,7 @@ Features
 📌  &nbsp; **Importable** - Besides the CLI tool cassowary can be imported as a module in your Go app  
 📌 &nbsp; **Visualizations** - Cassowary can export request data as a histogram and boxplot in png format  
 
-<img src="https://i.imgur.com/geJykYH.gif" />
-
-
+<img src="https://imgur.com/ac8F8eD.gif" />
 
 Installation  
 --------

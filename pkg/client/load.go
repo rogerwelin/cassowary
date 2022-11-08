@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/schollz/progressbar"
+	"github.com/schollz/progressbar/v3"
 )
 
 type durationMetrics struct {
@@ -174,7 +174,15 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		c.Requests = len(c.URLPaths)
 	}
 
-	c.Bar = progressbar.New(c.Requests)
+	c.Bar = progressbar.NewOptions(c.Requests,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}))
 
 	if !c.DisableTerminalOutput {
 		col := color.New(color.FgCyan).Add(color.Underline)
