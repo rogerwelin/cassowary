@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 
-	"github.com/schollz/progressbar"
+	"github.com/schollz/progressbar/v3"
 )
 
 // Cassowary is the main struct with bootstraps the load test
