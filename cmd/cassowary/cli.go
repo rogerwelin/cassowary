@@ -64,7 +64,10 @@ func runLoadTest(c *client.Cassowary) error {
 	if err != nil {
 		return err
 	}
-	outPutResults(metrics)
+
+	if !c.DisableTerminalOutput {
+		outPutResults(metrics)
+	}
 
 	if c.ExportMetrics {
 		return outPutJSON(c.ExportMetricsFile, metrics)
@@ -193,26 +196,27 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	cass := &client.Cassowary{
-		FileMode:          fileMode,
-		BaseURL:           c.String("url"),
-		ConcurrencyLevel:  c.Int("concurrency"),
-		Requests:          c.Int("requests"),
-		RequestHeader:     header,
-		Duration:          duration,
-		PromExport:        prometheusEnabled,
-		TLSConfig:         tlsConfig,
-		PromURL:           c.String("prompushgwurl"),
-		Cloudwatch:        c.Bool("cloudwatch"),
-		Boxplot:           c.Bool("boxplot"),
-		Histogram:         c.Bool("histogram"),
-		ExportMetrics:     c.Bool("json-metrics"),
-		RawOutput:         c.Bool("raw-output"),
-		ExportMetricsFile: c.String("json-metrics-file"),
-		DisableKeepAlive:  c.Bool("disable-keep-alive"),
-		Timeout:           c.Int("timeout"),
-		HTTPMethod:        httpMethod,
-		URLPaths:          urlSuffixes,
-		Data:              data,
+		FileMode:              fileMode,
+		DisableTerminalOutput: c.Bool("silent"),
+		BaseURL:               c.String("url"),
+		ConcurrencyLevel:      c.Int("concurrency"),
+		Requests:              c.Int("requests"),
+		RequestHeader:         header,
+		Duration:              duration,
+		PromExport:            prometheusEnabled,
+		TLSConfig:             tlsConfig,
+		PromURL:               c.String("prompushgwurl"),
+		Cloudwatch:            c.Bool("cloudwatch"),
+		Boxplot:               c.Bool("boxplot"),
+		Histogram:             c.Bool("histogram"),
+		ExportMetrics:         c.Bool("json-metrics"),
+		RawOutput:             c.Bool("raw-output"),
+		ExportMetricsFile:     c.String("json-metrics-file"),
+		DisableKeepAlive:      c.Bool("disable-keep-alive"),
+		Timeout:               c.Int("timeout"),
+		HTTPMethod:            httpMethod,
+		URLPaths:              urlSuffixes,
+		Data:                  data,
 	}
 
 	return runLoadTest(cass)
@@ -285,6 +289,11 @@ func runCLI(args []string) {
 					Name:    "R",
 					Aliases: []string{"raw-output"},
 					Usage:   "enable to export raw per-request metrics",
+				},
+				&cli.BoolFlag{
+					Name:    "s",
+					Aliases: []string{"silent"},
+					Usage:   "Do not show progress and do not print results on terminal (useful for other output types)",
 				},
 				&cli.BoolFlag{
 					Name:    "F",
