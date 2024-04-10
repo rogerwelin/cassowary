@@ -175,6 +175,10 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	tlsConfig := new(tls.Config)
+	if c.Bool("insecure") {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
 	if c.String("ca") != "" {
 		pemCerts, err := ioutil.ReadFile(c.String("ca"))
 		if err != nil {
@@ -328,6 +332,10 @@ func runCLI(args []string) {
 				&cli.BoolFlag{
 					Name:  "disable-keep-alive",
 					Usage: "use this flag to disable http keep-alive",
+				},
+				&cli.BoolFlag{
+					Name:  "insecure",
+					Usage: "use this flag to skip ssl verification",
 				},
 				&cli.StringFlag{
 					Name:  "ca",
