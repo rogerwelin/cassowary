@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -180,7 +179,7 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	if c.String("ca") != "" {
-		pemCerts, err := ioutil.ReadFile(c.String("ca"))
+		pemCerts, err := os.ReadFile(c.String("ca"))
 		if err != nil {
 			return err
 		}
