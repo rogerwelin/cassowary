@@ -153,7 +153,7 @@ Summary:
  Req/s...........................: 6547.48
 ```
 
-### Exporting Metrics to File  
+### Exporting Metrics to File/CSV  
 Example exporting **cassowary** json metrics to a file:
 
 ```bash
@@ -177,6 +177,9 @@ Summary:
 
 > If `json-metrics-file` flag is missing then the default filename is `out.json`.
 
+If you rather want the raw data of all the request (in CSV foramt) you can export it using the `--raw-output` flag
+
+> outputted filename is `raw.csv`
 
 ### Exporting Metrics to Prometheus
 Example exporting **cassowary** metrics to Prometheus by supplying an Prometheus PushGatway URL:
