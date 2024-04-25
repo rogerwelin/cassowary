@@ -177,7 +177,7 @@ Summary:
 
 > If `json-metrics-file` flag is missing then the default filename is `out.json`.
 
-If you rather want the raw data of all the request (in CSV foramt) you can export it using the `--raw-output` flag
+If you rather want the raw data of all the request (in CSV format) you can export it using the `--raw-output` flag
 
 > outputted filename is `raw.csv`
 
