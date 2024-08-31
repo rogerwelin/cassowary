@@ -132,11 +132,14 @@ func validateCLI(c *cli.Context) error {
 		prometheusEnabled = true
 	}
 
-	if c.String("header") != "" {
-		length := 0
-		length, header = client.SplitHeader(c.String("header"))
-		if length != 2 {
-			return errNotValidHeader
+	if len(c.StringSlice("header")) != 0 {
+		allHeaders := c.StringSlice("header")
+		for _, hdr := range allHeaders {
+			thisLen, thisHdr := client.SplitHeader(hdr)
+			if thisLen != 2 {
+				return errNotValidHeader
+			}
+			header = append(header, thisHdr...)
 		}
 	}
 
@@ -279,7 +282,7 @@ func runCLI(args []string) {
 					Aliases: []string{"prompushgwurl"},
 					Usage:   "specify prometheus push gateway url to send metrics (optional)",
 				},
-				&cli.StringFlag{
+				&cli.StringSliceFlag{
 					Name:    "H",
 					Aliases: []string{"header"},
 					Usage:   "add arbitrary header, eg. 'Host: www.example.com'",
