@@ -68,8 +68,13 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			}
 		}
 
-		if len(c.RequestHeader) == 2 {
-			request.Header.Add(c.RequestHeader[0], c.RequestHeader[1])
+		if len(c.RequestHeader)%2 == 0 {
+			for idx := range c.RequestHeader {
+				if idx%2 == 1 {
+					continue
+				}
+				request.Header.Add(c.RequestHeader[idx], c.RequestHeader[idx+1])
+			}
 		}
 
 		var t0, t1, t2, t3, t4, t5, t6 time.Time
