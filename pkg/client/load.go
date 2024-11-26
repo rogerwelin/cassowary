@@ -102,6 +102,7 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 		}
 
 		request = request.WithContext(httptrace.WithClientTrace(context.Background(), trace))
+		c.Client.Transport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 		resp, err := c.Client.Do(request)
 		if err != nil {
 			log.Fatalf("%v", err)
