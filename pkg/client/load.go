@@ -168,7 +168,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		Transport: &http.Transport{
 			TLSClientConfig:     c.TLSConfig,
 			MaxIdleConnsPerHost: 10000,
-			DisableCompression:  false,
+			DisableCompression:  true,
 			DisableKeepAlives:   c.DisableKeepAlive,
 		},
 	}
