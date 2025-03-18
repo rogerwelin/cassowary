@@ -147,13 +147,15 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 
 // Coordinate bootstraps the load test based on values in Cassowary struct
 func (c *Cassowary) Coordinate() (ResultMetrics, error) {
-	var dnsDur []float64
-	var tcpDur []float64
-	var tlsDur []float64
-	var serverDur []float64
-	var transferDur []float64
-	var statusCodes []int
-	var totalDur []float64
+	var (
+		dnsDur      = make([]float64, 0, c.Requests)
+		tcpDur      = make([]float64, 0, c.Requests)
+		tlsDur      = make([]float64, 0, c.Requests)
+		serverDur   = make([]float64, 0, c.Requests)
+		transferDur = make([]float64, 0, c.Requests)
+		statusCodes = make([]int, 0, c.Requests)
+		totalDur    = make([]float64, 0, c.Requests)
+	)
 
 	tls, err := isTLS(c.BaseURL)
 	if err != nil {
