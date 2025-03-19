@@ -169,6 +169,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 			MaxIdleConnsPerHost: 10000,
 			DisableCompression:  false,
 			DisableKeepAlives:   c.DisableKeepAlive,
+			Proxy:               http.ProxyFromEnvironment,
 		},
 	}
 
