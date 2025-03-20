@@ -1,7 +1,7 @@
 package client
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +18,7 @@ func TestPromGwPush(t *testing.T) {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			lastMethod = r.Method
 			var err error
-			_, err = ioutil.ReadAll(r.Body)
+			_, err = io.ReadAll(r.Body)
 			if err != nil {
 				t.Fatal(err)
 			}

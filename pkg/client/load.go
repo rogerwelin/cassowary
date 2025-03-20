@@ -7,7 +7,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptrace"
@@ -30,50 +29,74 @@ type durationMetrics struct {
 }
 
 func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan chan string) {
-	for URLitem := range workerChan {
-
-		var request *http.Request
+	// Pre-allocate and reuse request objects for GET requests if possible
+	var baseRequest *http.Request
+	if c.HTTPMethod == "GET" && !c.FileMode {
 		var err error
-
-		if c.FileMode {
-			request, err = http.NewRequest("GET", c.BaseURL+URLitem, nil)
-			if err != nil {
-				log.Fatalf("%v", err)
-			}
-		} else {
-			switch c.HTTPMethod {
-			case "POST":
-				request, err = http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(c.Data))
-				request.Header.Set("Content-Type", "application/json")
-				if err != nil {
-					log.Fatalf("%v", err)
-				}
-			case "PUT":
-				request, err = http.NewRequest("PUT", c.BaseURL, bytes.NewBuffer(c.Data))
-				request.Header.Set("Content-Type", "application/json")
-				if err != nil {
-					log.Fatalf("%v", err)
-				}
-			case "PATCH":
-				request, err = http.NewRequest("PATCH", c.BaseURL, bytes.NewBuffer(c.Data))
-				request.Header.Set("Content-Type", "application/json")
-				if err != nil {
-					log.Fatalf("%v", err)
-				}
-			default:
-				request, err = http.NewRequest("GET", c.BaseURL, nil)
-				if err != nil {
-					log.Fatalf("%v", err)
-				}
-			}
+		baseRequest, err = http.NewRequest("GET", c.BaseURL, nil)
+		if err != nil {
+			log.Fatalf("%v", err)
 		}
 
+		// Set common headers once
 		if len(c.RequestHeader)%2 == 0 {
 			for idx := range c.RequestHeader {
 				if idx%2 == 1 {
 					continue
 				}
-				request.Header.Add(c.RequestHeader[idx], c.RequestHeader[idx+1])
+				baseRequest.Header.Add(c.RequestHeader[idx], c.RequestHeader[idx+1])
+			}
+		}
+	}
+
+	for URLitem := range workerChan {
+		var request *http.Request
+		var err error
+
+		if baseRequest != nil {
+			// Clone the base request if we have one prepared
+			request = baseRequest.Clone(context.Background())
+		} else {
+			if c.FileMode {
+				request, err = http.NewRequest("GET", c.BaseURL+URLitem, nil)
+				if err != nil {
+					log.Fatalf("%v", err)
+				}
+			} else {
+				switch c.HTTPMethod {
+				case "POST":
+					request, err = http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(c.Data))
+					request.Header.Set("Content-Type", "application/json")
+					if err != nil {
+						log.Fatalf("%v", err)
+					}
+				case "PUT":
+					request, err = http.NewRequest("PUT", c.BaseURL, bytes.NewBuffer(c.Data))
+					request.Header.Set("Content-Type", "application/json")
+					if err != nil {
+						log.Fatalf("%v", err)
+					}
+				case "PATCH":
+					request, err = http.NewRequest("PATCH", c.BaseURL, bytes.NewBuffer(c.Data))
+					request.Header.Set("Content-Type", "application/json")
+					if err != nil {
+						log.Fatalf("%v", err)
+					}
+				default:
+					request, err = http.NewRequest("GET", c.BaseURL, nil)
+					if err != nil {
+						log.Fatalf("%v", err)
+					}
+				}
+			}
+
+			if len(c.RequestHeader)%2 == 0 {
+				for idx := range c.RequestHeader {
+					if idx%2 == 1 {
+						continue
+					}
+					request.Header.Add(c.RequestHeader[idx], c.RequestHeader[idx+1])
+				}
 			}
 		}
 
@@ -107,7 +130,7 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 			log.Fatalf("%v", err)
 		}
 		if resp != nil {
-			_, err = io.Copy(ioutil.Discard, resp.Body)
+			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
 				fmt.Println("Failed to read HTTP response body", err)
 			}
@@ -148,13 +171,15 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 
 // Coordinate bootstraps the load test based on values in Cassowary struct
 func (c *Cassowary) Coordinate() (ResultMetrics, error) {
-	var dnsDur []float64
-	var tcpDur []float64
-	var tlsDur []float64
-	var serverDur []float64
-	var transferDur []float64
-	var statusCodes []int
-	var totalDur []float64
+	var (
+		dnsDur      = make([]float64, 0, c.Requests)
+		tcpDur      = make([]float64, 0, c.Requests)
+		tlsDur      = make([]float64, 0, c.Requests)
+		serverDur   = make([]float64, 0, c.Requests)
+		transferDur = make([]float64, 0, c.Requests)
+		statusCodes = make([]int, 0, c.Requests)
+		totalDur    = make([]float64, 0, c.Requests)
+	)
 
 	tls, err := isTLS(c.BaseURL)
 	if err != nil {
@@ -167,7 +192,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		Transport: &http.Transport{
 			TLSClientConfig:     c.TLSConfig,
 			MaxIdleConnsPerHost: 10000,
-			DisableCompression:  false,
+			DisableCompression:  true,
 			DisableKeepAlives:   c.DisableKeepAlive,
 			Proxy:               http.ProxyFromEnvironment,
 		},

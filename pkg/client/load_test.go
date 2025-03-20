@@ -3,9 +3,9 @@ package client
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -83,7 +83,7 @@ func TestCoordinateTLSConfig(t *testing.T) {
 		w.Write([]byte("ok"))
 	}))
 
-	pemCerts, err := ioutil.ReadFile("testdata/ca.pem")
+	pemCerts, err := os.ReadFile("testdata/ca.pem")
 	if err != nil {
 		t.Fatal("Invalid ca.pem path")
 	}

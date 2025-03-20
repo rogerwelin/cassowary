@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -38,7 +37,7 @@ func downloadPath(url string) (string, error) {
 }
 
 func readFile(file string) ([]byte, error) {
-	fileContent, err := ioutil.ReadFile(file)
+	fileContent, err := os.ReadFile(file)
 	if err != nil {
 		return []byte{}, err
 	}

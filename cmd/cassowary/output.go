@@ -19,6 +19,6 @@ const (
 		` Req/s...........................: %s` + "\n\n"
 )
 
-func printf(format string, a ...interface{}) {
+func printf(format string, a ...any) {
 	fmt.Fprintf(color.Output, format, a...)
 }
