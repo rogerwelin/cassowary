@@ -1,6 +1,6 @@
 module github.com/rogerwelin/cassowary
 
-go 1.22
+go 1.24
 
 require (
 	github.com/aws/aws-sdk-go v1.44.51

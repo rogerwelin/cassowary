@@ -2,3 +2,5 @@ apa*
 out.json
 go-dist
 urls.txt
+cpu.prof
+heap.prof
