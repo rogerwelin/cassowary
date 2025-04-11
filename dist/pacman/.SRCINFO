@@ -1,0 +1,15 @@
+pkgbase = cassowary-git
+	pkgdesc = 🚀 Modern cross-platform HTTP load-testing tool written in Go
+	pkgver = 0.18.0
+	pkgrel = 1
+	url = https://github.com/rogerwelin/cassowary
+	arch = x86_64
+	license = MIT
+	makedepends = go
+	makedepends = git
+	provides = cassowary
+	conflicts = cassowary-bin
+	source = cassowary::git+https://github.com/rogerwelin/cassowary.git
+	sha256sums = SKIP
+
+pkgname = cassowary-git

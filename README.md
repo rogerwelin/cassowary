@@ -68,6 +68,7 @@ $ brew update && brew install cassowary
 ```
 
 ### Docker  
+
 You can run **cassowary** directly by using its official Docker image:  
 
 ```bash
@@ -82,6 +83,22 @@ $ docker build -f dist/docker/Dockerfile -t test_cassowary dist/docker
 $ docker run test_cassowary -u http://www.example.com -c 1 -n 10
 ```
 Without argument when doing "docker run" it prints help usage
+
+### ArchLinux/Manjaro
+
+You can install the development version of Cassowary from the [AUR](https://aur.archlinux.org/packages/cassowary-git):
+
+```bash
+yay -S cassowary-git
+```
+
+Or build and install it manually:
+
+```bash
+git clone https://aur.archlinux.org/cassowary-git.git
+cd cassowary-git
+makepkg -si
+```
 
 ### Nix/NixOS
 
