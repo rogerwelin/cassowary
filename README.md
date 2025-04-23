@@ -306,9 +306,9 @@ Starting Load Test with 1000 requests using 10 concurrent users
 Example specifying client authentication for mTLS
 
 ```bash
-$ ./cassowary run -u https://localhost:8443 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem --ca /path/to/ca.pem
+$ ./cassowary run -u https://localhost:8443 -c 10 -n 1000 --cert /path/to/client.pem --key /path/to/client-key.pem --ca /path/to/ca.pem --renegotiation once
 
-Starting Load Test with 1000 requests using 10 concurrent users
+Starting Load Test with 1000 requests using 10 concurrent users, allows the server to renegotiate client certificates once. This is needed for servers that optionally request client certificates.
 
 [ omitted for brevity ]
 
