@@ -181,6 +181,19 @@ func validateCLI(c *cli.Context) error {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
+	if c.String("renegotiation") != "" {
+		switch option := c.String("renegotiation"); option {
+		case "never":
+			tlsConfig.Renegotiation = tls.RenegotiateNever
+		case "once":
+			tlsConfig.Renegotiation = tls.RenegotiateOnceAsClient
+		case "freely":
+			tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
+		default:
+			return fmt.Errorf("invalid renegotiation option specified: %q", option)
+		}
+	}
+
 	if c.String("ca") != "" {
 		pemCerts, err := os.ReadFile(c.String("ca"))
 		if err != nil {
@@ -338,6 +351,11 @@ func runCLI(args []string) {
 				&cli.BoolFlag{
 					Name:  "insecure",
 					Usage: "use this flag to skip ssl verification",
+				},
+				&cli.StringFlag{
+					Name:  "renegotiation",
+					Usage: "Allow client certificate renegotiation: never, once, freely",
+					Value: "never",
 				},
 				&cli.StringFlag{
 					Name:  "ca",
