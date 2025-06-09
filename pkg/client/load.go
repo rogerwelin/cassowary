@@ -237,10 +237,24 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	if c.Duration > 0 {
 		durationMS := c.Duration * 1000
 		nextTick := durationMS / c.Requests
-		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
-		if nextTick == 0 {
-			log.Fatalf("The combination of %v requests and %v(s) duration is invalid. Try raising the duration to a greater value", c.Requests, c.Duration)
+
+		// Check if nextTick is too small (less than 1ms)
+		if nextTick < 1 {
+			// If nextTick is less than 1 millisecond the duration is too short to handle the requested number of requests.
+			// To avoid this, calculate the *minimum* valid duration (in seconds) needed to
+			// accommodate c.Requests at a minimum interval of 1ms per request.
+			// Use ceiling division to round up: (requests + 999) / 1000 ensures rounding up
+			// when converting milliseconds to seconds.
+			// To achieve ceiling division using integers, use the formula: (a + b - 1) / b.
+			// In this case, a = c.Requests and b = 1000 (milliseconds per second), so:
+			//   minDuration = (c.Requests + 1000 - 1) / 1000
+			//               = (c.Requests + 999) / 1000
+			// This ensures that any fractional second is rounded *up*, not down.
+			minDuration := (c.Requests + 999) / 1000
+			log.Fatalf("The combination of %v requests and %v(s) duration is invalid. The minimum duration required for %v requests is %v seconds. Try using -d %v or higher", c.Requests, c.Duration, c.Requests, minDuration, minDuration)
 		}
+
+		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
 		done := make(chan bool)
 		iter := 0
 
