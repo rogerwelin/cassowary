@@ -394,7 +394,13 @@ Versioning
 
 Cassowary follows semantic versioning. The public library (pkg/client) may break backwards compatibility until it hits a stable v1.0.0 release.
 
-Contributing
+🛠️ Contributing
 --------
 
 Contributions are welcome! To request a feature create a new issue with the label `feature-request`. Find a bug? Please add an issue with the label `bugs`. Pull requests are also welcomed but please add an issue on the requested feature first (unless it's a simple bug fix or readme change)
+
+Thanks goes to these wonderful people!
+
+<a href="https://github.com/rogerwelin/cassowary/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=rogerwelin/cassowary" />
+</a>
