@@ -33,6 +33,9 @@ type Cassowary struct {
 	Timeout               int
 	HTTPMethod            string
 	Data                  []byte
+	SineCurve             bool
+	SineFrequency         float64
+	SineAmplitude         float64
 }
 
 // ResultMetrics are the aggregated metrics after the load test

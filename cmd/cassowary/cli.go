@@ -23,6 +23,8 @@ var (
 	errNotValidURL      = errors.New("error: Not a valid URL. Must have the following format: http{s}://{host}")
 	errNotValidHeader   = errors.New("error: Not a valid header value. Did you forget : ?")
 	errDurationValue    = errors.New("error: Duration cannot be set to 0 or negative")
+	errSineAmplitude    = errors.New("error: Sine amplitude must be between 0.0 and 1.0")
+	errSineFrequency    = errors.New("error: Sine frequency must be greater than 0")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -120,6 +122,16 @@ func validateCLI(c *cli.Context) error {
 		}
 		if duration <= 0 {
 			return errDurationValue
+		}
+	}
+
+	// Validate sine curve parameters
+	if c.Bool("sine-curve") {
+		if c.Float64("sine-amplitude") < 0.0 || c.Float64("sine-amplitude") > 1.0 {
+			return errSineAmplitude
+		}
+		if c.Float64("sine-frequency") <= 0 {
+			return errSineFrequency
 		}
 	}
 
@@ -236,6 +248,9 @@ func validateCLI(c *cli.Context) error {
 		HTTPMethod:            httpMethod,
 		URLPaths:              urlSuffixes,
 		Data:                  data,
+		SineCurve:             c.Bool("sine-curve"),
+		SineFrequency:         c.Float64("sine-frequency"),
+		SineAmplitude:         c.Float64("sine-amplitude"),
 	}
 
 	return runLoadTest(cass)
@@ -368,6 +383,20 @@ func runCLI(args []string) {
 				&cli.StringFlag{
 					Name:  "key",
 					Usage: "client authentication key",
+				},
+				&cli.BoolFlag{
+					Name:  "sine-curve",
+					Usage: "enable sine curve request pattern (varies request rate over time)",
+				},
+				&cli.Float64Flag{
+					Name:  "sine-frequency",
+					Usage: "number of sine wave cycles during the test duration",
+					Value: 1.0,
+				},
+				&cli.Float64Flag{
+					Name:  "sine-amplitude",
+					Usage: "amplitude factor for sine wave (0.0-1.0, where 1.0 means rate varies from 0 to 2x baseline)",
+					Value: 0.5,
 				},
 			},
 			Action: validateCLI,
