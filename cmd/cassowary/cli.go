@@ -62,6 +62,10 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 	return enc.Encode(metrics)
 }
 
+// applySinePreset configures sine curve parameters using predefined combinations
+// gentle: 0.25 frequency + 0.3 amplitude = gradual ramp-up, good for production testing
+// normal: 0.5 frequency + 0.5 amplitude = balanced oscillation, general purpose
+// aggressive: 2.0 frequency + 0.7 amplitude = rapid changes, stress testing
 func applySinePreset(c *cli.Context, preset string) error {
 	switch preset {
 	case "gentle":
@@ -89,6 +93,8 @@ func applySinePreset(c *cli.Context, preset string) error {
 	return nil
 }
 
+// showSineCurveCompatibilityWarnings validates sine curve parameters and warns about suboptimal configurations
+// Checks for timing precision issues, extreme values, and parameter combinations that may not work well
 func showSineCurveCompatibilityWarnings(c *cli.Context, duration int) {
 	concurrency := c.Int("concurrency")
 	requests := c.Int("requests")

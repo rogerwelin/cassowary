@@ -185,11 +185,13 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 	}
 }
 
-// sendRequestsSineCurve sends requests following a sine wave pattern over the duration
+// sendRequestsSineCurve implements sine wave load pattern over fixed duration.
+// Formula: rate(t) = baseline × (1 + amplitude × sin(2π × frequency × progress))
+// This creates realistic traffic patterns with natural peaks and valleys.
 func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 	durationSeconds := float64(c.Duration)
 
-	// Calculate baseline rate (requests per second)
+	// Calculate baseline rate (average req/sec around which we oscillate)
 	baselineRate := float64(c.Requests) / durationSeconds
 
 	startTime := time.Now()
@@ -204,25 +206,23 @@ func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 			break
 		}
 
-		// Calculate sine wave factor: sin(2π * frequency * t)
-		// This gives us a value between -1 and 1
-		progress := elapsed / durationSeconds // 0 to 1
+		// Calculate sine wave: progress (0→1) × frequency gives phase, sin() gives oscillation (-1→+1)
+		progress := elapsed / durationSeconds
 		sinePhase := 2 * math.Pi * c.SineFrequency * progress
 		sineFactor := math.Sin(sinePhase)
 
-		// Calculate current rate: baseline + amplitude * baseline * sine_factor
-		// With amplitude 0.5 and sine factor -1 to 1, rate varies from 0.5*baseline to 1.5*baseline
+		// Apply amplitude scaling: amplitude=0.5 gives ±50% variation around baseline
 		currentRate := baselineRate * (1.0 + c.SineAmplitude*sineFactor)
 
-		// Ensure rate is never zero or negative
+		// Safety guard: prevent zero/negative rates
 		if currentRate <= 0 {
 			currentRate = baselineRate * minRateMultiplier
 		}
 
-		// Calculate interval in milliseconds (inverse of rate)
+		// Convert rate to sleep interval: higher rate = shorter interval = faster requests
 		intervalMS := msPerSecond / currentRate
 
-		// Ensure minimum interval
+		// Enforce minimum interval to prevent system overload
 		if intervalMS < minRequestIntervalMS {
 			intervalMS = minRequestIntervalMS
 		}
@@ -241,33 +241,32 @@ func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 	}
 }
 
-// sendRequestsSineCurveNoDuration sends requests following a sine wave pattern without a fixed duration
-// It sends the specified number of requests, varying the rate according to the sine wave
+// sendRequestsSineCurveNoDuration implements sine wave pattern for request-based mode.
+// Uses absolute time and fixed baseline rate (10 req/sec) instead of duration-based calculation.
 func (c *Cassowary) sendRequestsSineCurveNoDuration(workerChan chan string) {
 	startTime := time.Now()
 	requestsSent := 0
 
 	for requestsSent < c.Requests {
-		// Calculate elapsed time in seconds since start
+		// Calculate elapsed time and sine wave using absolute time scale
 		elapsed := time.Since(startTime).Seconds()
-
-		// Calculate sine wave factor using absolute time
-		// The frequency determines how many complete cycles per minute
+		
+		// Frequency determines cycles per minute (not per test duration)
 		sinePhase := 2 * math.Pi * c.SineFrequency * elapsed / secondsPerMinute
 		sineFactor := math.Sin(sinePhase)
 
-		// Calculate current rate: baseline + amplitude * baseline * sine_factor
+		// Apply amplitude scaling using fixed baseline (10 req/sec)
 		currentRate := defaultSineBaselineRate * (1.0 + c.SineAmplitude*sineFactor)
 
-		// Ensure rate is never zero or negative
+		// Safety guard: prevent zero/negative rates
 		if currentRate <= 0 {
 			currentRate = defaultSineBaselineRate * minRateMultiplier
 		}
 
-		// Calculate interval in milliseconds (inverse of rate)
+		// Convert rate to sleep interval
 		intervalMS := msPerSecond / currentRate
 
-		// Ensure minimum interval
+		// Enforce minimum interval to prevent system overload
 		if intervalMS < minRequestIntervalMS {
 			intervalMS = minRequestIntervalMS
 		}
