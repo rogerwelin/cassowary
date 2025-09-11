@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -58,6 +59,83 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 
 	enc := json.NewEncoder(f)
 	return enc.Encode(metrics)
+}
+
+func showSineCurveCompatibilityWarnings(c *cli.Context, duration int) {
+	concurrency := c.Int("concurrency")
+	requests := c.Int("requests")
+	amplitude := c.Float64("sine-amplitude")
+	frequency := c.Float64("sine-frequency")
+	fileMode := c.String("file") != ""
+	
+	warnings := make([]string, 0)
+	
+	// High concurrency warning
+	if concurrency > 1 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High concurrency (%d users) may reduce sine wave timing precision", concurrency))
+		warnings = append(warnings, "   Consider using -c 1 for most accurate sine wave patterns")
+	}
+	
+	// Very short duration warning  
+	if duration > 0 && duration < 10 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Short duration (%ds) may not show clear sine wave pattern", duration))
+		warnings = append(warnings, "   Consider using -d 30 or higher for better wave visibility")
+	}
+	
+	// File mode warning
+	if fileMode {
+		warnings = append(warnings, "⚠️  File mode with sine curve uses URL paths in sequence")
+		warnings = append(warnings, "   Each request in the sine pattern will cycle through your URL list")
+	}
+	
+	// Extreme parameter combinations
+	if amplitude >= 0.8 && frequency >= 3.0 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High amplitude (%.1f) + high frequency (%.1f) creates dramatic load spikes", amplitude, frequency))
+		warnings = append(warnings, "   This may cause rapid oscillation between very high and very low rates")
+	}
+	
+	if amplitude >= 0.9 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Very high amplitude (%.1f) creates extreme rate variations", amplitude))
+		warnings = append(warnings, "   Rate will vary from near-zero to almost 2x baseline - ensure your system can handle this")
+	}
+	
+	// Very high frequency warning
+	if frequency >= 5.0 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High frequency (%.1f) creates rapid load oscillations", frequency))
+		if duration > 0 {
+			cycleTime := float64(duration) / frequency
+			warnings = append(warnings, fmt.Sprintf("   Each cycle lasts only %.1f seconds", cycleTime))
+		}
+	}
+	
+	// Very low amplitude warning
+	if amplitude <= 0.1 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Low amplitude (%.1f) creates minimal rate variation", amplitude))
+		warnings = append(warnings, "   You may not notice much difference from constant load testing")
+	}
+	
+	// Duration vs requests mismatch for very high rates
+	if duration > 0 {
+		baselineRate := float64(requests) / float64(duration)
+		maxRate := baselineRate * (1.0 + amplitude)
+		if maxRate > 100 {
+			warnings = append(warnings, fmt.Sprintf("⚠️  Peak rate may reach %.0f req/s during sine wave peaks", maxRate))
+			warnings = append(warnings, "   Ensure your target system can handle these high request rates")
+		}
+	}
+	
+	// Print warnings if any
+	if len(warnings) > 0 {
+		fmt.Fprintf(os.Stderr, "\n🌊 Sine Curve Compatibility Warnings:\n")
+		for _, warning := range warnings {
+			fmt.Fprintf(os.Stderr, "%s\n", warning)
+		}
+		fmt.Fprintf(os.Stderr, "\n💡 Use --sine-preview to visualize the pattern before running\n")
+		fmt.Fprintf(os.Stderr, "⏱️  Waiting 3 seconds before continuing... (Ctrl+C to abort)\n\n")
+		
+		// Give user time to read warnings and cancel if needed
+		time.Sleep(3 * time.Second)
+	}
 }
 
 func runLoadTest(c *client.Cassowary) error {
@@ -151,6 +229,9 @@ func validateCLI(c *cli.Context) error {
 		if c.Float64("sine-frequency") <= 0 {
 			return errSineFrequency
 		}
+		
+		// Compatibility warnings for sine curve
+		showSineCurveCompatibilityWarnings(c, duration)
 	}
 
 	if !client.IsValidURL(c.String("url")) {
