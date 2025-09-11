@@ -20,6 +20,20 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+const (
+	// Sine curve timing constants
+	defaultSineBaselineRate = 10.0  // Default baseline rate (req/s) when no duration is specified
+	minRequestIntervalMS    = 1.0   // Minimum interval between requests (ms) to prevent system overload
+	minRateMultiplier       = 0.1   // Minimum rate as fraction of baseline (10%) to prevent zero/negative rates
+	msPerSecond             = 1000.0 // Milliseconds per second conversion factor
+	secondsPerMinute        = 60.0   // Seconds per minute for frequency calculation
+
+	// HTTP client configuration constants  
+	maxIdleConnsPerHost     = 10000 // Maximum idle connections per host for HTTP client
+	tcpConnThresholdMS      = 1000  // TCP connection time threshold (ms) for filtering outliers
+	msPerSecondInt          = 1000  // Milliseconds per second as integer for duration calculations
+)
+
 type durationMetrics struct {
 	DNSLookup        float64
 	TCPConn          float64
@@ -178,9 +192,6 @@ func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 	// Calculate baseline rate (requests per second)
 	baselineRate := float64(c.Requests) / durationSeconds
 
-	// Minimum interval to prevent ticker panic (1ms minimum)
-	minIntervalMS := 1.0
-
 	startTime := time.Now()
 	requestsSent := 0
 
@@ -205,15 +216,15 @@ func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 
 		// Ensure rate is never zero or negative
 		if currentRate <= 0 {
-			currentRate = baselineRate * 0.1 // 10% of baseline as minimum
+			currentRate = baselineRate * minRateMultiplier
 		}
 
 		// Calculate interval in milliseconds (inverse of rate)
-		intervalMS := 1000.0 / currentRate
+		intervalMS := msPerSecond / currentRate
 
 		// Ensure minimum interval
-		if intervalMS < minIntervalMS {
-			intervalMS = minIntervalMS
+		if intervalMS < minRequestIntervalMS {
+			intervalMS = minRequestIntervalMS
 		}
 
 		// Send request
@@ -233,13 +244,6 @@ func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
 // sendRequestsSineCurveNoDuration sends requests following a sine wave pattern without a fixed duration
 // It sends the specified number of requests, varying the rate according to the sine wave
 func (c *Cassowary) sendRequestsSineCurveNoDuration(workerChan chan string) {
-	// Use a default baseline rate of 10 requests per second when no duration is specified
-	// This provides a reasonable starting point for the sine wave oscillation
-	baselineRate := 10.0
-
-	// Minimum interval to prevent ticker panic (1ms minimum)
-	minIntervalMS := 1.0
-
 	startTime := time.Now()
 	requestsSent := 0
 
@@ -249,23 +253,23 @@ func (c *Cassowary) sendRequestsSineCurveNoDuration(workerChan chan string) {
 
 		// Calculate sine wave factor using absolute time
 		// The frequency determines how many complete cycles per minute
-		sinePhase := 2 * math.Pi * c.SineFrequency * elapsed / 60.0 // frequency cycles per minute
+		sinePhase := 2 * math.Pi * c.SineFrequency * elapsed / secondsPerMinute
 		sineFactor := math.Sin(sinePhase)
 
 		// Calculate current rate: baseline + amplitude * baseline * sine_factor
-		currentRate := baselineRate * (1.0 + c.SineAmplitude*sineFactor)
+		currentRate := defaultSineBaselineRate * (1.0 + c.SineAmplitude*sineFactor)
 
 		// Ensure rate is never zero or negative
 		if currentRate <= 0 {
-			currentRate = baselineRate * 0.1 // 10% of baseline as minimum
+			currentRate = defaultSineBaselineRate * minRateMultiplier
 		}
 
 		// Calculate interval in milliseconds (inverse of rate)
-		intervalMS := 1000.0 / currentRate
+		intervalMS := msPerSecond / currentRate
 
 		// Ensure minimum interval
-		if intervalMS < minIntervalMS {
-			intervalMS = minIntervalMS
+		if intervalMS < minRequestIntervalMS {
+			intervalMS = minRequestIntervalMS
 		}
 
 		// Send request
@@ -304,7 +308,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
 			TLSClientConfig:     c.TLSConfig,
-			MaxIdleConnsPerHost: 10000,
+			MaxIdleConnsPerHost: maxIdleConnsPerHost,
 			DisableCompression:  true,
 			DisableKeepAlives:   c.DisableKeepAlive,
 			Proxy:               http.ProxyFromEnvironment,
@@ -353,7 +357,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 			c.sendRequestsSineCurve(workerChan)
 		} else {
 			// Regular mode: send requests at constant intervals
-			durationMS := c.Duration * 1000
+			durationMS := c.Duration * msPerSecondInt
 			nextTick := durationMS / c.Requests
 
 			// Check if nextTick is too small (less than 1ms)
@@ -361,14 +365,14 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 				// If nextTick is less than 1 millisecond the duration is too short to handle the requested number of requests.
 				// To avoid this, calculate the *minimum* valid duration (in seconds) needed to
 				// accommodate c.Requests at a minimum interval of 1ms per request.
-				// Use ceiling division to round up: (requests + 999) / 1000 ensures rounding up
+				// Use ceiling division to round up: (requests + (msPerSecondInt-1)) / msPerSecondInt ensures rounding up
 				// when converting milliseconds to seconds.
 				// To achieve ceiling division using integers, use the formula: (a + b - 1) / b.
-				// In this case, a = c.Requests and b = 1000 (milliseconds per second), so:
-				//   minDuration = (c.Requests + 1000 - 1) / 1000
-				//               = (c.Requests + 999) / 1000
+				// In this case, a = c.Requests and b = msPerSecondInt (milliseconds per second), so:
+				//   minDuration = (c.Requests + msPerSecondInt - 1) / msPerSecondInt
+				//               = (c.Requests + (msPerSecondInt-1)) / msPerSecondInt
 				// This ensures that any fractional second is rounded *up*, not down.
-				minDuration := (c.Requests + 999) / 1000
+				minDuration := (c.Requests + (msPerSecondInt - 1)) / msPerSecondInt
 				log.Fatalf("The combination of %v requests and %v(s) duration is invalid. The minimum duration required for %v requests is %v seconds. Try using -d %v or higher", c.Requests, c.Duration, c.Requests, minDuration, minDuration)
 			}
 
@@ -442,7 +446,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		if item.DNSLookup != 0 {
 			dnsDur = append(dnsDur, item.DNSLookup)
 		}
-		if item.TCPConn < 1000 {
+		if item.TCPConn < tcpConnThresholdMS {
 			tcpDur = append(tcpDur, item.TCPConn)
 		}
 		if c.IsTLS {
