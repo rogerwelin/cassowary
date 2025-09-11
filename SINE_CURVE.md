@@ -5,10 +5,15 @@ Sine curve load testing varies the request rate over time following a mathematic
 ## Quick Start
 
 ```bash
+# Start with presets - easiest way to get good results
+$ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-preset gentle
+$ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-preset normal  
+$ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-preset aggressive
+
 # Preview the pattern first (no requests sent)
 $ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-preview
 
-# Run actual sine curve test  
+# Run actual sine curve test with new defaults (frequency=0.5, amplitude=0.5)
 $ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-curve
 
 # Live animated preview (no requests sent)
@@ -19,8 +24,14 @@ $ ./cassowary run -u http://example.com -n 1000 -d 60 --sine-preview-live
 
 | Parameter | Description | Default | Example Values |
 |-----------|-------------|---------|----------------|
-| `--sine-frequency` | Complete cycles during test | 1.0 | 0.5 (slow), 2.0 (fast) |
+| `--sine-preset` | Use preset configuration | - | gentle, normal, aggressive |
+| `--sine-frequency` | Complete cycles during test | 0.5 | 0.25 (very slow), 2.0 (fast) |
 | `--sine-amplitude` | Rate variation intensity (0.0-1.0) | 0.5 | 0.2 (gentle), 0.8 (dramatic) |
+
+### Presets
+- **gentle**: `frequency=0.25, amplitude=0.3` → Gradual ramp-up to +30%
+- **normal**: `frequency=0.5, amplitude=0.5` → Ramp up/down with ±50% variation  
+- **aggressive**: `frequency=2.0, amplitude=0.7` → Rapid oscillations with ±70% variation
 
 **Rate Formula**: `rate = baseline × (1 + amplitude × sin(...))`
 - **Amplitude 0.5**: Rate varies from 50% to 150% of baseline

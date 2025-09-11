@@ -26,6 +26,7 @@ var (
 	errDurationValue    = errors.New("error: Duration cannot be set to 0 or negative")
 	errSineAmplitude    = errors.New("error: Sine amplitude must be between 0.0 and 1.0")
 	errSineFrequency    = errors.New("error: Sine frequency must be greater than 0")
+	errSinePreset       = errors.New("error: Sine preset must be one of: gentle, normal, aggressive")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -59,6 +60,33 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 
 	enc := json.NewEncoder(f)
 	return enc.Encode(metrics)
+}
+
+func applySinePreset(c *cli.Context, preset string) error {
+	switch preset {
+	case "gentle":
+		// Gentle: Small variation, slow ramp-up/down
+		c.Set("sine-frequency", "0.25") // Quarter cycle - just ramp up
+		c.Set("sine-amplitude", "0.3")  // ±30% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'gentle' preset: frequency=0.25, amplitude=0.3 (gradual ramp-up to +30%)\n")
+		
+	case "normal":
+		// Normal: Moderate variation, half cycle  
+		c.Set("sine-frequency", "0.5")  // Half cycle - ramp up then down
+		c.Set("sine-amplitude", "0.5")  // ±50% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'normal' preset: frequency=0.5, amplitude=0.5 (ramp up/down with ±50% variation)\n")
+		
+	case "aggressive":
+		// Aggressive: High variation, fast oscillations
+		c.Set("sine-frequency", "2.0")  // Two complete cycles
+		c.Set("sine-amplitude", "0.7")  // ±70% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'aggressive' preset: frequency=2.0, amplitude=0.7 (rapid oscillations with ±70% variation)\n")
+		
+	default:
+		return errSinePreset
+	}
+	
+	return nil
 }
 
 func showSineCurveCompatibilityWarnings(c *cli.Context, duration int) {
@@ -222,7 +250,16 @@ func validateCLI(c *cli.Context) error {
 	}
 
 	// Validate sine curve parameters
-	if c.Bool("sine-curve") {
+	if c.Bool("sine-curve") || c.String("sine-preset") != "" {
+		// Handle preset mode
+		if preset := c.String("sine-preset"); preset != "" {
+			if err := applySinePreset(c, preset); err != nil {
+				return err
+			}
+			// Auto-enable sine curve when using preset
+			c.Set("sine-curve", "true")
+		}
+		
 		if c.Float64("sine-amplitude") < 0.0 || c.Float64("sine-amplitude") > 1.0 {
 			return errSineAmplitude
 		}
@@ -489,10 +526,14 @@ func runCLI(args []string) {
 					Name:  "sine-curve",
 					Usage: "enable sine curve request pattern (varies request rate over time)",
 				},
+				&cli.StringFlag{
+					Name:  "sine-preset",
+					Usage: "use predefined sine wave settings: gentle, normal, aggressive",
+				},
 				&cli.Float64Flag{
 					Name:  "sine-frequency",
 					Usage: "number of sine wave cycles during the test duration",
-					Value: 1.0,
+					Value: 0.5,
 				},
 				&cli.Float64Flag{
 					Name:  "sine-amplitude",
