@@ -27,6 +27,13 @@ var (
 	errSineAmplitude    = errors.New("error: Sine amplitude must be between 0.0 and 1.0")
 	errSineFrequency    = errors.New("error: Sine frequency must be greater than 0")
 	errSinePreset       = errors.New("error: Sine preset must be one of: gentle, normal, aggressive")
+	
+	// Enhanced sine curve validation errors
+	errSineFrequencyTooHigh    = errors.New("error: Sine frequency too high (>10.0) - may cause timing precision issues")
+	errSineAmplitudeTooHigh    = errors.New("error: Sine amplitude >0.8 with high frequency may cause extreme rate variations")
+	errSineDurationTooShort    = errors.New("error: Duration too short for sine wave pattern - need at least 10 seconds for meaningful oscillation")
+	errSineRequestsTooFew      = errors.New("error: Too few requests (<10) for sine curve pattern - use constant rate instead")
+	errSineIncompatibleMode    = errors.New("error: Sine curve incompatible with file mode when file has fewer URLs than requests")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -60,6 +67,67 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 
 	enc := json.NewEncoder(f)
 	return enc.Encode(metrics)
+}
+
+// validateSineCurveParameters performs comprehensive validation of sine curve parameters
+// Checks for logical consistency, timing precision issues, and extreme value combinations
+func validateSineCurveParameters(c *cli.Context, requests, duration int) error {
+	amplitude := c.Float64("sine-amplitude")
+	frequency := c.Float64("sine-frequency")
+	
+	// Basic range validation
+	if amplitude < 0.0 || amplitude > 1.0 {
+		return errSineAmplitude
+	}
+	if frequency <= 0 {
+		return errSineFrequency
+	}
+	
+	// Advanced validation for practical usage
+	if frequency > 10.0 {
+		return errSineFrequencyTooHigh
+	}
+	
+	// Check for extreme amplitude + frequency combinations
+	if amplitude > 0.8 && frequency > 3.0 {
+		return errSineAmplitudeTooHigh
+	}
+	
+	// Duration-based validation (when duration is specified)
+	if duration > 0 {
+		if duration < 10 {
+			return errSineDurationTooShort
+		}
+		
+		// Check if frequency makes sense for the duration
+		// Very low frequency with short duration means incomplete cycles
+		if frequency < 0.1 && duration < 60 {
+			return fmt.Errorf("error: Sine frequency %.2f with %ds duration produces incomplete wave cycle - increase frequency or duration", frequency, duration)
+		}
+	}
+	
+	// Request count validation
+	if requests < 10 {
+		return errSineRequestsTooFew
+	}
+	
+	// Duration-request ratio validation for meaningful sine waves
+	if duration > 0 && requests > 0 {
+		baselineRate := float64(requests) / float64(duration)
+		if baselineRate > 100 {
+			return fmt.Errorf("error: Baseline rate %.1f req/s too high for precise sine wave timing - reduce requests or increase duration", baselineRate)
+		}
+		if baselineRate < 0.1 {
+			return fmt.Errorf("error: Baseline rate %.2f req/s too low - increase requests or decrease duration", baselineRate)
+		}
+	}
+	
+	// Validate amplitude for extreme high frequency scenarios
+	if frequency > 5.0 && amplitude > 0.6 {
+		return fmt.Errorf("error: Frequency %.1f with amplitude %.1f creates timing precision issues - reduce amplitude below 0.6 or use lower frequency", frequency, amplitude)
+	}
+	
+	return nil
 }
 
 // applySinePreset configures sine curve parameters using predefined combinations
@@ -255,7 +323,7 @@ func validateCLI(c *cli.Context) error {
 		}
 	}
 
-	// Validate sine curve parameters
+	// Enhanced sine curve validation
 	if c.Bool("sine-curve") || c.String("sine-preset") != "" {
 		// Handle preset mode
 		if preset := c.String("sine-preset"); preset != "" {
@@ -266,11 +334,9 @@ func validateCLI(c *cli.Context) error {
 			c.Set("sine-curve", "true")
 		}
 		
-		if c.Float64("sine-amplitude") < 0.0 || c.Float64("sine-amplitude") > 1.0 {
-			return errSineAmplitude
-		}
-		if c.Float64("sine-frequency") <= 0 {
-			return errSineFrequency
+		// Perform comprehensive sine curve validation
+		if err := validateSineCurveParameters(c, c.Int("requests"), duration); err != nil {
+			return err
 		}
 		
 		// Compatibility warnings for sine curve
