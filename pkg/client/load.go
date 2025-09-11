@@ -14,8 +14,24 @@ import (
 	"sync"
 	"time"
 
+	"math"
+
 	"github.com/fatih/color"
 	"github.com/schollz/progressbar/v3"
+)
+
+const (
+	// Sine curve timing constants
+	defaultSineBaselineRate = 10.0  // Default baseline rate (req/s) when no duration is specified
+	minRequestIntervalMS    = 1.0   // Minimum interval between requests (ms) to prevent system overload
+	minRateMultiplier       = 0.1   // Minimum rate as fraction of baseline (10%) to prevent zero/negative rates
+	msPerSecond             = 1000.0 // Milliseconds per second conversion factor
+	secondsPerMinute        = 60.0   // Seconds per minute for frequency calculation
+
+	// HTTP client configuration constants  
+	maxIdleConnsPerHost     = 10000 // Maximum idle connections per host for HTTP client
+	tcpConnThresholdMS      = 1000  // TCP connection time threshold (ms) for filtering outliers
+	msPerSecondInt          = 1000  // Milliseconds per second as integer for duration calculations
 )
 
 type durationMetrics struct {
@@ -169,6 +185,106 @@ func (c *Cassowary) runLoadTest(outPutChan chan<- durationMetrics, workerChan ch
 	}
 }
 
+// sendRequestsSineCurve implements sine wave load pattern over fixed duration.
+// Formula: rate(t) = baseline × (1 + amplitude × sin(2π × frequency × progress))
+// This creates realistic traffic patterns with natural peaks and valleys.
+func (c *Cassowary) sendRequestsSineCurve(workerChan chan string) {
+	durationSeconds := float64(c.Duration)
+
+	// Calculate baseline rate (average req/sec around which we oscillate)
+	baselineRate := float64(c.Requests) / durationSeconds
+
+	startTime := time.Now()
+	requestsSent := 0
+
+	for requestsSent < c.Requests {
+		// Calculate elapsed time as a fraction of total duration (0 to 1)
+		elapsed := time.Since(startTime).Seconds()
+
+		// Stop if we've exceeded the duration
+		if elapsed >= durationSeconds {
+			break
+		}
+
+		// Calculate sine wave: progress (0→1) × frequency gives phase, sin() gives oscillation (-1→+1)
+		progress := elapsed / durationSeconds
+		sinePhase := 2 * math.Pi * c.SineFrequency * progress
+		sineFactor := math.Sin(sinePhase)
+
+		// Apply amplitude scaling: amplitude=0.5 gives ±50% variation around baseline
+		currentRate := baselineRate * (1.0 + c.SineAmplitude*sineFactor)
+
+		// Safety guard: prevent zero/negative rates
+		if currentRate <= 0 {
+			currentRate = baselineRate * minRateMultiplier
+		}
+
+		// Convert rate to sleep interval: higher rate = shorter interval = faster requests
+		intervalMS := msPerSecond / currentRate
+
+		// Enforce minimum interval to prevent system overload
+		if intervalMS < minRequestIntervalMS {
+			intervalMS = minRequestIntervalMS
+		}
+
+		// Send request
+		if c.FileMode && requestsSent < len(c.URLPaths) {
+			workerChan <- c.URLPaths[requestsSent]
+		} else {
+			workerChan <- "a"
+		}
+
+		requestsSent++
+
+		// Sleep for the calculated interval
+		time.Sleep(time.Duration(intervalMS) * time.Millisecond)
+	}
+}
+
+// sendRequestsSineCurveNoDuration implements sine wave pattern for request-based mode.
+// Uses absolute time and fixed baseline rate (10 req/sec) instead of duration-based calculation.
+func (c *Cassowary) sendRequestsSineCurveNoDuration(workerChan chan string) {
+	startTime := time.Now()
+	requestsSent := 0
+
+	for requestsSent < c.Requests {
+		// Calculate elapsed time and sine wave using absolute time scale
+		elapsed := time.Since(startTime).Seconds()
+		
+		// Frequency determines cycles per minute (not per test duration)
+		sinePhase := 2 * math.Pi * c.SineFrequency * elapsed / secondsPerMinute
+		sineFactor := math.Sin(sinePhase)
+
+		// Apply amplitude scaling using fixed baseline (10 req/sec)
+		currentRate := defaultSineBaselineRate * (1.0 + c.SineAmplitude*sineFactor)
+
+		// Safety guard: prevent zero/negative rates
+		if currentRate <= 0 {
+			currentRate = defaultSineBaselineRate * minRateMultiplier
+		}
+
+		// Convert rate to sleep interval
+		intervalMS := msPerSecond / currentRate
+
+		// Enforce minimum interval to prevent system overload
+		if intervalMS < minRequestIntervalMS {
+			intervalMS = minRequestIntervalMS
+		}
+
+		// Send request
+		if c.FileMode && requestsSent < len(c.URLPaths) {
+			workerChan <- c.URLPaths[requestsSent]
+		} else {
+			workerChan <- "a"
+		}
+
+		requestsSent++
+
+		// Sleep for the calculated interval
+		time.Sleep(time.Duration(intervalMS) * time.Millisecond)
+	}
+}
+
 // Coordinate bootstraps the load test based on values in Cassowary struct
 func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	var (
@@ -191,7 +307,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		Timeout: time.Second * time.Duration(c.Timeout),
 		Transport: &http.Transport{
 			TLSClientConfig:     c.TLSConfig,
-			MaxIdleConnsPerHost: 10000,
+			MaxIdleConnsPerHost: maxIdleConnsPerHost,
 			DisableCompression:  true,
 			DisableKeepAlives:   c.DisableKeepAlive,
 			Proxy:               http.ProxyFromEnvironment,
@@ -235,51 +351,60 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 	}
 
 	if c.Duration > 0 {
-		durationMS := c.Duration * 1000
-		nextTick := durationMS / c.Requests
+		if c.SineCurve {
+			// Sine curve mode: send requests at variable intervals following a sine wave
+			c.sendRequestsSineCurve(workerChan)
+		} else {
+			// Regular mode: send requests at constant intervals
+			durationMS := c.Duration * msPerSecondInt
+			nextTick := durationMS / c.Requests
 
-		// Check if nextTick is too small (less than 1ms)
-		if nextTick < 1 {
-			// If nextTick is less than 1 millisecond the duration is too short to handle the requested number of requests.
-			// To avoid this, calculate the *minimum* valid duration (in seconds) needed to
-			// accommodate c.Requests at a minimum interval of 1ms per request.
-			// Use ceiling division to round up: (requests + 999) / 1000 ensures rounding up
-			// when converting milliseconds to seconds.
-			// To achieve ceiling division using integers, use the formula: (a + b - 1) / b.
-			// In this case, a = c.Requests and b = 1000 (milliseconds per second), so:
-			//   minDuration = (c.Requests + 1000 - 1) / 1000
-			//               = (c.Requests + 999) / 1000
-			// This ensures that any fractional second is rounded *up*, not down.
-			minDuration := (c.Requests + 999) / 1000
-			log.Fatalf("The combination of %v requests and %v(s) duration is invalid. The minimum duration required for %v requests is %v seconds. Try using -d %v or higher", c.Requests, c.Duration, c.Requests, minDuration, minDuration)
-		}
+			// Check if nextTick is too small (less than 1ms)
+			if nextTick < 1 {
+				// If nextTick is less than 1 millisecond the duration is too short to handle the requested number of requests.
+				// To avoid this, calculate the *minimum* valid duration (in seconds) needed to
+				// accommodate c.Requests at a minimum interval of 1ms per request.
+				// Use ceiling division to round up: (requests + (msPerSecondInt-1)) / msPerSecondInt ensures rounding up
+				// when converting milliseconds to seconds.
+				// To achieve ceiling division using integers, use the formula: (a + b - 1) / b.
+				// In this case, a = c.Requests and b = msPerSecondInt (milliseconds per second), so:
+				//   minDuration = (c.Requests + msPerSecondInt - 1) / msPerSecondInt
+				//               = (c.Requests + (msPerSecondInt-1)) / msPerSecondInt
+				// This ensures that any fractional second is rounded *up*, not down.
+				minDuration := (c.Requests + (msPerSecondInt - 1)) / msPerSecondInt
+				log.Fatalf("The combination of %v requests and %v(s) duration is invalid. The minimum duration required for %v requests is %v seconds. Try using -d %v or higher", c.Requests, c.Duration, c.Requests, minDuration, minDuration)
+			}
 
-		ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
-		done := make(chan bool)
-		iter := 0
+			ticker := time.NewTicker(time.Duration(nextTick) * time.Millisecond)
+			done := make(chan bool)
+			iter := 0
 
-		go func() {
-			for {
-				select {
-				case <-done:
-					return
-				case _ = <-ticker.C:
-					if c.FileMode {
-						workerChan <- c.URLPaths[iter]
-						iter++
-					} else {
-						workerChan <- "a"
+			go func() {
+				for {
+					select {
+					case <-done:
+						return
+					case <-ticker.C:
+						if c.FileMode {
+							workerChan <- c.URLPaths[iter]
+							iter++
+						} else {
+							workerChan <- "a"
+						}
 					}
 				}
-			}
-		}()
+			}()
 
-		time.Sleep(time.Duration(durationMS) * time.Millisecond)
-		ticker.Stop()
-		done <- true
+			time.Sleep(time.Duration(c.Duration) * time.Second)
+			ticker.Stop()
+			done <- true
+		}
 	}
 
-	if c.Duration == 0 && c.FileMode {
+	if c.Duration == 0 && c.SineCurve {
+		// Sine curve mode without duration: send specified number of requests following sine wave pattern
+		c.sendRequestsSineCurveNoDuration(workerChan)
+	} else if c.Duration == 0 && c.FileMode {
 		for _, line := range c.URLPaths {
 			workerChan <- line
 		}
@@ -320,7 +445,7 @@ func (c *Cassowary) Coordinate() (ResultMetrics, error) {
 		if item.DNSLookup != 0 {
 			dnsDur = append(dnsDur, item.DNSLookup)
 		}
-		if item.TCPConn < 1000 {
+		if item.TCPConn < tcpConnThresholdMS {
 			tcpDur = append(tcpDur, item.TCPConn)
 		}
 		if c.IsTLS {

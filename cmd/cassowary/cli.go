@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -23,6 +24,16 @@ var (
 	errNotValidURL      = errors.New("error: Not a valid URL. Must have the following format: http{s}://{host}")
 	errNotValidHeader   = errors.New("error: Not a valid header value. Did you forget : ?")
 	errDurationValue    = errors.New("error: Duration cannot be set to 0 or negative")
+	errSineAmplitude    = errors.New("error: Sine amplitude must be between 0.0 and 1.0")
+	errSineFrequency    = errors.New("error: Sine frequency must be greater than 0")
+	errSinePreset       = errors.New("error: Sine preset must be one of: gentle, normal, aggressive")
+	
+	// Enhanced sine curve validation errors
+	errSineFrequencyTooHigh    = errors.New("error: Sine frequency too high (>10.0) - may cause timing precision issues")
+	errSineAmplitudeTooHigh    = errors.New("error: Sine amplitude >0.8 with high frequency may cause extreme rate variations")
+	errSineDurationTooShort    = errors.New("error: Duration too short for sine wave pattern - need at least 10 seconds for meaningful oscillation")
+	errSineRequestsTooFew      = errors.New("error: Too few requests (<10) for sine curve pattern - use constant rate instead")
+	errSineIncompatibleMode    = errors.New("error: Sine curve incompatible with file mode when file has fewer URLs than requests")
 )
 
 func outPutResults(metrics client.ResultMetrics) {
@@ -58,7 +69,196 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 	return enc.Encode(metrics)
 }
 
+// validateSineCurveParameters performs comprehensive validation of sine curve parameters
+// Checks for logical consistency, timing precision issues, and extreme value combinations
+func validateSineCurveParameters(c *cli.Context, requests, duration int) error {
+	amplitude := c.Float64("sine-amplitude")
+	frequency := c.Float64("sine-frequency")
+	
+	// Basic range validation
+	if amplitude < 0.0 || amplitude > 1.0 {
+		return errSineAmplitude
+	}
+	if frequency <= 0 {
+		return errSineFrequency
+	}
+	
+	// Advanced validation for practical usage
+	if frequency > 10.0 {
+		return errSineFrequencyTooHigh
+	}
+	
+	// Check for extreme amplitude + frequency combinations
+	if amplitude > 0.8 && frequency > 3.0 {
+		return errSineAmplitudeTooHigh
+	}
+	
+	// Duration-based validation (when duration is specified)
+	if duration > 0 {
+		if duration < 10 {
+			return errSineDurationTooShort
+		}
+		
+		// Check if frequency makes sense for the duration
+		// Very low frequency with short duration means incomplete cycles
+		if frequency < 0.1 && duration < 60 {
+			return fmt.Errorf("error: Sine frequency %.2f with %ds duration produces incomplete wave cycle - increase frequency or duration", frequency, duration)
+		}
+	}
+	
+	// Request count validation
+	if requests < 10 {
+		return errSineRequestsTooFew
+	}
+	
+	// Duration-request ratio validation for meaningful sine waves
+	if duration > 0 && requests > 0 {
+		baselineRate := float64(requests) / float64(duration)
+		if baselineRate > 100 {
+			return fmt.Errorf("error: Baseline rate %.1f req/s too high for precise sine wave timing - reduce requests or increase duration", baselineRate)
+		}
+		if baselineRate < 0.1 {
+			return fmt.Errorf("error: Baseline rate %.2f req/s too low - increase requests or decrease duration", baselineRate)
+		}
+	}
+	
+	// Validate amplitude for extreme high frequency scenarios
+	if frequency > 5.0 && amplitude > 0.6 {
+		return fmt.Errorf("error: Frequency %.1f with amplitude %.1f creates timing precision issues - reduce amplitude below 0.6 or use lower frequency", frequency, amplitude)
+	}
+	
+	return nil
+}
+
+// applySinePreset configures sine curve parameters using predefined combinations
+// gentle: 0.25 frequency + 0.3 amplitude = gradual ramp-up, good for production testing
+// normal: 0.5 frequency + 0.5 amplitude = balanced oscillation, general purpose
+// aggressive: 2.0 frequency + 0.7 amplitude = rapid changes, stress testing
+func applySinePreset(c *cli.Context, preset string) error {
+	switch preset {
+	case "gentle":
+		// Gentle: Small variation, slow ramp-up/down
+		c.Set("sine-frequency", "0.25") // Quarter cycle - just ramp up
+		c.Set("sine-amplitude", "0.3")  // ±30% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'gentle' preset: frequency=0.25, amplitude=0.3 (gradual ramp-up to +30%)\n")
+		
+	case "normal":
+		// Normal: Moderate variation, half cycle  
+		c.Set("sine-frequency", "0.5")  // Half cycle - ramp up then down
+		c.Set("sine-amplitude", "0.5")  // ±50% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'normal' preset: frequency=0.5, amplitude=0.5 (ramp up/down with ±50% variation)\n")
+		
+	case "aggressive":
+		// Aggressive: High variation, fast oscillations
+		c.Set("sine-frequency", "2.0")  // Two complete cycles
+		c.Set("sine-amplitude", "0.7")  // ±70% variation
+		fmt.Fprintf(os.Stderr, "📈 Applied 'aggressive' preset: frequency=2.0, amplitude=0.7 (rapid oscillations with ±70% variation)\n")
+		
+	default:
+		return errSinePreset
+	}
+	
+	return nil
+}
+
+// showSineCurveCompatibilityWarnings validates sine curve parameters and warns about suboptimal configurations
+// Checks for timing precision issues, extreme values, and parameter combinations that may not work well
+func showSineCurveCompatibilityWarnings(c *cli.Context, duration int) {
+	concurrency := c.Int("concurrency")
+	requests := c.Int("requests")
+	amplitude := c.Float64("sine-amplitude")
+	frequency := c.Float64("sine-frequency")
+	fileMode := c.String("file") != ""
+	
+	warnings := make([]string, 0)
+	
+	// High concurrency warning
+	if concurrency > 1 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High concurrency (%d users) may reduce sine wave timing precision", concurrency))
+		warnings = append(warnings, "   Consider using -c 1 for most accurate sine wave patterns")
+	}
+	
+	// Very short duration warning  
+	if duration > 0 && duration < 10 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Short duration (%ds) may not show clear sine wave pattern", duration))
+		warnings = append(warnings, "   Consider using -d 30 or higher for better wave visibility")
+	}
+	
+	// File mode warning
+	if fileMode {
+		warnings = append(warnings, "⚠️  File mode with sine curve uses URL paths in sequence")
+		warnings = append(warnings, "   Each request in the sine pattern will cycle through your URL list")
+	}
+	
+	// Extreme parameter combinations
+	if amplitude >= 0.8 && frequency >= 3.0 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High amplitude (%.1f) + high frequency (%.1f) creates dramatic load spikes", amplitude, frequency))
+		warnings = append(warnings, "   This may cause rapid oscillation between very high and very low rates")
+	}
+	
+	if amplitude >= 0.9 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Very high amplitude (%.1f) creates extreme rate variations", amplitude))
+		warnings = append(warnings, "   Rate will vary from near-zero to almost 2x baseline - ensure your system can handle this")
+	}
+	
+	// Very high frequency warning
+	if frequency >= 5.0 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  High frequency (%.1f) creates rapid load oscillations", frequency))
+		if duration > 0 {
+			cycleTime := float64(duration) / frequency
+			warnings = append(warnings, fmt.Sprintf("   Each cycle lasts only %.1f seconds", cycleTime))
+		}
+	}
+	
+	// Very low amplitude warning
+	if amplitude <= 0.1 {
+		warnings = append(warnings, fmt.Sprintf("⚠️  Low amplitude (%.1f) creates minimal rate variation", amplitude))
+		warnings = append(warnings, "   You may not notice much difference from constant load testing")
+	}
+	
+	// Duration vs requests mismatch for very high rates
+	if duration > 0 {
+		baselineRate := float64(requests) / float64(duration)
+		maxRate := baselineRate * (1.0 + amplitude)
+		if maxRate > 100 {
+			warnings = append(warnings, fmt.Sprintf("⚠️  Peak rate may reach %.0f req/s during sine wave peaks", maxRate))
+			warnings = append(warnings, "   Ensure your target system can handle these high request rates")
+		}
+	}
+	
+	// Print warnings if any
+	if len(warnings) > 0 {
+		fmt.Fprintf(os.Stderr, "\n🌊 Sine Curve Compatibility Warnings:\n")
+		for _, warning := range warnings {
+			fmt.Fprintf(os.Stderr, "%s\n", warning)
+		}
+		fmt.Fprintf(os.Stderr, "\n💡 Use --sine-preview to visualize the pattern before running\n")
+		fmt.Fprintf(os.Stderr, "⏱️  Waiting 3 seconds before continuing... (Ctrl+C to abort)\n\n")
+		
+		// Give user time to read warnings and cancel if needed
+		time.Sleep(3 * time.Second)
+	}
+}
+
 func runLoadTest(c *client.Cassowary) error {
+	// Handle sine curve preview modes
+	if c.SinePreviewLive {
+		if !c.SineCurve {
+			// Automatically enable sine curve if live preview is requested
+			c.SineCurve = true
+		}
+		return c.ShowLiveSineVisualization()
+	}
+	
+	if c.SinePreview {
+		if !c.SineCurve {
+			// Automatically enable sine curve if preview is requested
+			c.SineCurve = true
+		}
+		c.ShowSineVisualization()
+		return nil
+	}
+
 	metrics, err := c.Coordinate()
 	if err != nil {
 		return err
@@ -121,6 +321,26 @@ func validateCLI(c *cli.Context) error {
 		if duration <= 0 {
 			return errDurationValue
 		}
+	}
+
+	// Enhanced sine curve validation
+	if c.Bool("sine-curve") || c.String("sine-preset") != "" {
+		// Handle preset mode
+		if preset := c.String("sine-preset"); preset != "" {
+			if err := applySinePreset(c, preset); err != nil {
+				return err
+			}
+			// Auto-enable sine curve when using preset
+			c.Set("sine-curve", "true")
+		}
+		
+		// Perform comprehensive sine curve validation
+		if err := validateSineCurveParameters(c, c.Int("requests"), duration); err != nil {
+			return err
+		}
+		
+		// Compatibility warnings for sine curve
+		showSineCurveCompatibilityWarnings(c, duration)
 	}
 
 	if !client.IsValidURL(c.String("url")) {
@@ -236,6 +456,11 @@ func validateCLI(c *cli.Context) error {
 		HTTPMethod:            httpMethod,
 		URLPaths:              urlSuffixes,
 		Data:                  data,
+		SineCurve:             c.Bool("sine-curve"),
+		SineFrequency:         c.Float64("sine-frequency"),
+		SineAmplitude:         c.Float64("sine-amplitude"),
+		SinePreview:           c.Bool("sine-preview"),
+		SinePreviewLive:       c.Bool("sine-preview-live"),
 	}
 
 	return runLoadTest(cass)
@@ -253,7 +478,25 @@ func runCLI(args []string) {
 	app.Commands = []*cli.Command{
 		{
 			Name:  "run",
-			Usage: "start load-test",
+			Usage: "start load-test with constant or sine wave traffic patterns",
+			Description: `Start a load test with configurable request patterns:
+
+• Constant rate: Traditional load testing with steady request rate
+• Sine wave: Realistic traffic simulation with natural peaks and valleys
+• Use --sine-preset for quick start or --sine-preview to visualize first
+
+EXAMPLES:
+  # Traditional constant rate test
+  cassowary run -u https://example.com -n 1000 -d 60 -c 10
+
+  # Quick sine wave test (recommended for beginners)
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-preset normal
+  
+  # Preview sine wave pattern before running
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-preview
+  
+  # Custom sine wave with gentle variation
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-curve --sine-frequency 0.5 --sine-amplitude 0.3`,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:     "u",
@@ -369,6 +612,32 @@ func runCLI(args []string) {
 					Name:  "key",
 					Usage: "client authentication key",
 				},
+				&cli.BoolFlag{
+					Name:  "sine-curve",
+					Usage: "Enable sine wave load pattern (realistic traffic simulation with peaks and valleys)",
+				},
+				&cli.StringFlag{
+					Name:  "sine-preset",
+					Usage: "Quick start with preset patterns: 'gentle' (gradual +30%), 'normal' (±50%), 'aggressive' (±70%)",
+				},
+				&cli.Float64Flag{
+					Name:  "sine-frequency",
+					Usage: "Wave cycles during test (0.5=half wave, 1.0=complete cycle, 2.0=fast oscillations)",
+					Value: 0.5,
+				},
+				&cli.Float64Flag{
+					Name:  "sine-amplitude",
+					Usage: "Traffic variation intensity (0.2=gentle ±20%, 0.5=moderate ±50%, 0.8=dramatic ±80%)",
+					Value: 0.5,
+				},
+				&cli.BoolFlag{
+					Name:  "sine-preview",
+					Usage: "Preview sine wave pattern with ASCII chart (safe - no actual requests sent)",
+				},
+				&cli.BoolFlag{
+					Name:  "sine-preview-live",
+					Usage: "Watch live animated sine wave preview (safe - no actual requests sent)",
+				},
 			},
 			Action: validateCLI,
 		},
@@ -409,11 +678,13 @@ func setCustomCLITemplate(c *cli.App) {
 	{{.Copyright}}{{end}}
 
 	%s
-	Example running cassowary against a target with 100 requests using 10 concurrent users
-	  %s
+	Examples:
+	  Traditional: %s
+	  Sine wave:   %s
   `, whiteBold("NAME"),
 		whiteBold("COMMANDS"),
 		whiteBold("GLOBAL OPTIONS"),
-		whiteUnderline("Example"),
-		cyan("$ cassowary run -u http://www.example.com -c 10 -n 100"))
+		whiteUnderline("Examples"),
+		cyan("$ cassowary run -u http://www.example.com -c 10 -n 100"),
+		cyan("$ cassowary run -u http://www.example.com -n 1000 -d 60 --sine-preset normal"))
 }

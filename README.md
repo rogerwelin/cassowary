@@ -32,6 +32,7 @@ Toc
   * [Boxplot](#boxplot)
   * [Load Test with POST Data](#load-test-with-post-data)
   * [Specifying a Duration](#specifying-a-duration-for-the-load-test)
+  * [Sine Curve Load Testing](#sine-curve-load-testing)
   * [Adding HTTP Headers](#adding-http-headers)
   * [Disabling HTTP keep-alive](#disabling-http-keep-alive)
   * [x509 Authentication](#x509-authentication)
@@ -45,6 +46,7 @@ Features
 --------
 
 📌 &nbsp; **2 Load Testing modes**: one standard and one spread mode where URL Paths can be specified from a file (ideal if you want to hit several underlying microservices)  
+📌 &nbsp; **Variable Load Patterns**: Sine curve mode for realistic traffic simulation with peaks and valleys over time  
 📌 &nbsp;  **CI Friendly**: Well-suited to be part of a CI pipeline step  
 📌 &nbsp; **Flexible metrics**: Cloudwatch metrics, Prometheus metrics (pushing metrics to Prometheus PushGateway), JSON file  
 📌  &nbsp; **Configurable**: Able to pass in arbitrary HTTP headers, able to configure the HTTP client  
@@ -265,6 +267,49 @@ Starting Load Test with 100 requests using 1 concurrent users
 [ omitted for brevity ]
 
 ```
+
+### Sine Curve Load Testing  
+**Cassowary** supports variable load patterns using sine curve mode, which varies the request rate over time following a mathematical sine wave. This simulates realistic traffic patterns with natural peaks and valleys.
+
+#### Quick Reference
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--sine-curve` | Enable sine wave pattern | false |
+| `--sine-preset` | Use preset: gentle, normal, aggressive | - |
+| `--sine-frequency` | Cycles per test duration | 0.5 |
+| `--sine-amplitude` | Rate variation (0.0-1.0) | 0.5 |
+| `--sine-preview` | Show static ASCII preview (no requests sent) | false |
+| `--sine-preview-live` | Show live animated preview (no requests sent) | false |
+
+#### Basic Usage
+```bash
+# Quick start with presets
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preset gentle
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preset normal
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preset aggressive
+
+# Basic sine curve with new defaults (frequency=0.5, amplitude=0.5)
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve
+
+# Preview the pattern first (no requests sent)
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preview
+
+# Live animated preview (no requests sent) 
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preview-live
+```
+
+#### Preset Patterns
+- **Gentle**: `frequency=0.25, amplitude=0.3` (gradual ramp-up to +30%)
+- **Normal**: `frequency=0.5, amplitude=0.5` (ramp up/down with ±50% variation) 
+- **Aggressive**: `frequency=2.0, amplitude=0.7` (rapid oscillations with ±70% variation)
+
+#### Manual Configuration Examples  
+- **Custom gentle**: `--sine-frequency 0.5 --sine-amplitude 0.2` (half cycle, ±20%)
+- **Custom dramatic**: `--sine-frequency 1.0 --sine-amplitude 0.8` (full cycle, ±80%)
+- **Fast cycles**: `--sine-frequency 3.0 --sine-amplitude 0.5` (3 complete cycles)
+
+**📖 For detailed documentation, advanced examples, and mathematical explanations, see [SINE_CURVE.md](SINE_CURVE.md)**
 
 ### Adding HTTP Headers  
 Example adding an HTTP header when running **cassowary**
