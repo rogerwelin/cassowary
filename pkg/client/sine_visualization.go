@@ -3,7 +3,11 @@ package client
 import (
 	"fmt"
 	"math"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -14,6 +18,11 @@ const (
 	chartHeight      = 20   // Height of ASCII chart in characters
 	timeAxisPoints   = 10   // Number of time points to show on X-axis
 	previewDuration  = 60.0 // Default preview duration in seconds for visualization
+	
+	// Live visualization constants
+	liveUpdateInterval = 100 * time.Millisecond // Update frequency for live animation
+	liveWindowSeconds  = 30.0                   // Time window to show in live mode
+	progressBarWidth   = 50                     // Width of progress bar
 )
 
 // SineVisualizationParams holds parameters for generating the sine wave preview
@@ -208,9 +217,11 @@ func generateASCIIChart(params SineVisualizationParams) string {
 func printVisualizationHeader(params SineVisualizationParams) {
 	cyan := color.New(color.FgCyan, color.Bold).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
+	red := color.New(color.FgRed, color.Bold).SprintFunc()
 	
 	fmt.Printf("\n%s\n", cyan("🌊 Sine Wave Load Pattern Preview"))
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	fmt.Printf("📋 %s\n", red("PREVIEW MODE - No actual HTTP requests are sent"))
 	
 	if params.HasDuration {
 		fmt.Printf("Mode: %s | ", yellow("Duration-based"))
@@ -267,6 +278,282 @@ func printVisualizationFooter(params SineVisualizationParams) {
 	fmt.Printf("• Use %s for faster oscillations\n", cyan("--sine-frequency 2.0"))
 	fmt.Printf("• Use %s for slower waves\n", cyan("--sine-frequency 0.5"))
 	
-	fmt.Printf("\n🚀 Ready to run the actual test? Remove %s flag!\n", cyan("--sine-preview"))
+	fmt.Printf("\n🚀 Ready to run the actual test? Remove %s flag (keep %s)!\n", cyan("--sine-preview"), cyan("--sine-curve"))
+	fmt.Printf("   %s\n", color.New(color.Faint).Sprint("⚠️  This will send REAL HTTP requests to your target URL"))
+	
+	var exampleCmd string
+	if params.HasDuration {
+		exampleCmd = fmt.Sprintf("cassowary run -u your-url -n %d -d %d --sine-curve --sine-frequency %.1f --sine-amplitude %.1f", 
+			params.Requests, int(params.Duration), params.Frequency, params.Amplitude)
+	} else {
+		exampleCmd = fmt.Sprintf("cassowary run -u your-url -n %d --sine-curve --sine-frequency %.1f --sine-amplitude %.1f", 
+			params.Requests, params.Frequency, params.Amplitude)
+	}
+	fmt.Printf("   Example: %s\n", cyan(exampleCmd))
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+}
+
+// ShowLiveSineVisualization displays a live animated ASCII visualization of the sine wave pattern
+func (c *Cassowary) ShowLiveSineVisualization() error {
+	params := SineVisualizationParams{
+		Frequency:    c.SineFrequency,
+		Amplitude:    c.SineAmplitude,
+		HasDuration:  c.Duration > 0,
+		Requests:     c.Requests,
+	}
+
+	if params.HasDuration {
+		params.Duration = float64(c.Duration)
+		params.BaselineRate = float64(c.Requests) / params.Duration
+	} else {
+		params.Duration = previewDuration
+		params.BaselineRate = defaultSineBaselineRate
+	}
+
+	// Set up signal handling for graceful exit
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Clear screen and hide cursor
+	fmt.Print("\033[2J\033[H\033[?25l")
+	
+	// Ensure cursor is restored on exit
+	defer fmt.Print("\033[?25h")
+
+	startTime := time.Now()
+	ticker := time.NewTicker(liveUpdateInterval)
+	defer ticker.Stop()
+
+	// Print initial header
+	printLiveVisualizationHeader(params)
+
+	for {
+		select {
+		case <-sigChan:
+			fmt.Print("\033[?25h") // Show cursor
+			fmt.Println("\n\n🛑 Live preview interrupted. Goodbye!")
+			return nil
+		case <-ticker.C:
+			elapsed := time.Since(startTime).Seconds()
+			
+			// Stop if we've run past the duration (for duration-based mode)
+			if params.HasDuration && elapsed >= params.Duration {
+				fmt.Print("\033[?25h") // Show cursor
+				fmt.Printf("\n\n🎉 Live preview completed after %.1f seconds!\n", elapsed)
+				fmt.Printf("🚀 Ready to run the actual test? Remove %s flag (keep %s)!\n", 
+					color.CyanString("--sine-preview-live"), color.CyanString("--sine-curve"))
+				fmt.Printf("   %s\n", color.New(color.Faint).Sprint("⚠️  This will send REAL HTTP requests to your target URL"))
+				return nil
+			}
+
+			// Move cursor to chart position and update
+			fmt.Print("\033[6;1H") // Move to line 6 (after header)
+			renderLiveChart(params, elapsed)
+		}
+	}
+}
+
+// printLiveVisualizationHeader prints the header for live visualization
+func printLiveVisualizationHeader(params SineVisualizationParams) {
+	cyan := color.New(color.FgCyan, color.Bold).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
+	red := color.New(color.FgRed, color.Bold).SprintFunc()
+	
+	fmt.Printf("🌊 %s - Press Ctrl+C to exit\n", cyan("Live Sine Wave Visualization"))
+	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	fmt.Printf("📋 %s\n", red("LIVE PREVIEW MODE - No actual HTTP requests are sent"))
+	
+	if params.HasDuration {
+		fmt.Printf("Mode: %s | ", yellow("Duration-based"))
+		fmt.Printf("Duration: %s | ", yellow(fmt.Sprintf("%.0fs", params.Duration)))
+		fmt.Printf("Requests: %s\n", yellow(fmt.Sprintf("%d", params.Requests)))
+	} else {
+		fmt.Printf("Mode: %s | ", yellow("Request-based"))
+		fmt.Printf("Requests: %s | ", yellow(fmt.Sprintf("%d", params.Requests)))
+		fmt.Printf("Demo Duration: %s\n", yellow(fmt.Sprintf("%.0fs", params.Duration)))
+	}
+	
+	fmt.Printf("Frequency: %s cycles | ", yellow(fmt.Sprintf("%.1f", params.Frequency)))
+	fmt.Printf("Amplitude: %s | ", yellow(fmt.Sprintf("%.1f", params.Amplitude)))
+	fmt.Printf("Baseline Rate: %s\n\n", yellow(fmt.Sprintf("%.1f req/s", params.BaselineRate)))
+}
+
+// renderLiveChart renders the current state of the sine wave chart
+func renderLiveChart(params SineVisualizationParams, currentTime float64) {
+	// Calculate current position in the wave
+	var sinePhase float64
+	if params.HasDuration {
+		progress := currentTime / params.Duration
+		sinePhase = 2 * math.Pi * params.Frequency * progress
+	} else {
+		sinePhase = 2 * math.Pi * params.Frequency * currentTime / secondsPerMinute
+	}
+	
+	sineFactor := math.Sin(sinePhase)
+	currentRate := params.BaselineRate * (1.0 + params.Amplitude*sineFactor)
+	
+	if currentRate <= 0 {
+		currentRate = params.BaselineRate * minRateMultiplier
+	}
+
+	// Calculate rate bounds for display
+	minRate := params.BaselineRate * (1.0 - params.Amplitude)
+	maxRate := params.BaselineRate * (1.0 + params.Amplitude)
+	
+	if minRate <= 0 {
+		minRate = params.BaselineRate * minRateMultiplier
+	}
+
+	// Generate data points for the sliding window
+	dataPoints := make([]float64, chartWidth)
+	timeWindow := liveWindowSeconds
+	
+	for i := 0; i < chartWidth; i++ {
+		// Calculate time for this point (sliding window)
+		pointTime := currentTime - timeWindow + (float64(i)/float64(chartWidth-1))*timeWindow
+		
+		if pointTime < 0 {
+			dataPoints[i] = params.BaselineRate // Show baseline before start
+		} else {
+			var pointSinePhase float64
+			if params.HasDuration {
+				pointProgress := pointTime / params.Duration
+				pointSinePhase = 2 * math.Pi * params.Frequency * pointProgress
+			} else {
+				pointSinePhase = 2 * math.Pi * params.Frequency * pointTime / secondsPerMinute
+			}
+			
+			pointSineFactor := math.Sin(pointSinePhase)
+			pointRate := params.BaselineRate * (1.0 + params.Amplitude*pointSineFactor)
+			
+			if pointRate <= 0 {
+				pointRate = params.BaselineRate * minRateMultiplier
+			}
+			
+			dataPoints[i] = pointRate
+		}
+	}
+
+	// Render the chart
+	for row := 0; row < chartHeight; row++ {
+		rowRate := maxRate - (float64(row)/float64(chartHeight-1))*(maxRate-minRate)
+		
+		// Y-axis labels
+		if row == 0 {
+			fmt.Printf("%5.1f ┤", maxRate)
+		} else if row == chartHeight/2 {
+			fmt.Printf("%5.1f ┤", params.BaselineRate)
+		} else if row == chartHeight-1 {
+			fmt.Printf("%5.1f ┤", minRate)
+		} else {
+			fmt.Print("      │")
+		}
+		
+		// Plot the wave
+		for i := 0; i < chartWidth; i++ {
+			rate := dataPoints[i]
+			
+			// Highlight current position
+			isCurrentPos := i == chartWidth-1
+			
+			if i == 0 {
+				if rate >= rowRate {
+					if isCurrentPos {
+						fmt.Print(color.RedString("●"))
+					} else if row == chartHeight/2 {
+						fmt.Print(color.CyanString("─"))
+					} else {
+						fmt.Print(color.GreenString("╭"))
+					}
+				} else {
+					fmt.Print(" ")
+				}
+			} else {
+				prevRate := dataPoints[i-1]
+				
+				if rate >= rowRate && prevRate >= rowRate {
+					if isCurrentPos {
+						fmt.Print(color.RedString("●"))
+					} else {
+						fmt.Print(color.GreenString("─"))
+					}
+				} else if rate >= rowRate && prevRate < rowRate {
+					if isCurrentPos {
+						fmt.Print(color.RedString("●"))
+					} else {
+						fmt.Print(color.GreenString("╱"))
+					}
+				} else if rate < rowRate && prevRate >= rowRate {
+					fmt.Print(color.GreenString("╲"))
+				} else {
+					if row == chartHeight/2 {
+						fmt.Print(color.CyanString("─"))
+					} else {
+						fmt.Print(" ")
+					}
+				}
+			}
+		}
+		
+		// Add live rate info
+		if row == 0 {
+			fmt.Print(color.RedString(" ← Peak Rate"))
+		} else if row == chartHeight/2 {
+			fmt.Print(color.CyanString(" ← Baseline"))
+		} else if row == chartHeight-1 {
+			fmt.Print(color.YellowString(" ← Valley Rate"))
+		}
+		
+		fmt.Println()
+	}
+	
+	// Time axis
+	fmt.Print("      └")
+	for i := 0; i < chartWidth; i++ {
+		fmt.Print("─")
+	}
+	fmt.Println()
+	
+	// Time markers for sliding window
+	fmt.Print("       ")
+	startWindowTime := currentTime - timeWindow
+	for i := 0; i <= 4; i++ {
+		markerTime := startWindowTime + (float64(i)/4.0)*timeWindow
+		timeStr := fmt.Sprintf("%.1fs", math.Max(0, markerTime))
+		fmt.Printf("%-15s", timeStr)
+	}
+	fmt.Println()
+	
+	// Current status
+	fmt.Printf("\n⏱️  Current Time: %s | ", color.CyanString(fmt.Sprintf("%.1fs", currentTime)))
+	fmt.Printf("Current Rate: %s | ", color.GreenString(fmt.Sprintf("%.1f req/s", currentRate)))
+	
+	if params.HasDuration {
+		progress := (currentTime / params.Duration) * 100
+		fmt.Printf("Progress: %s", color.YellowString(fmt.Sprintf("%.1f%%", math.Min(100, progress))))
+	} else {
+		fmt.Printf("Running: %s", color.YellowString("Continuous"))
+	}
+	
+	// Progress bar for duration-based mode
+	if params.HasDuration {
+		progress := currentTime / params.Duration
+		if progress > 1.0 {
+			progress = 1.0
+		}
+		
+		fmt.Printf("\n🔄 Progress: [")
+		filledBars := int(progress * float64(progressBarWidth))
+		
+		for i := 0; i < progressBarWidth; i++ {
+			if i < filledBars {
+				fmt.Print(color.GreenString("█"))
+			} else {
+				fmt.Print(color.New(color.Faint).Sprint("░"))
+			}
+		}
+		fmt.Printf("] %.1f%%\n", progress*100)
+	}
+	
+	fmt.Printf("\n💡 %s\n", color.New(color.Faint).Sprint("The red dot (●) shows the current time position"))
 }

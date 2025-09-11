@@ -37,6 +37,7 @@ type Cassowary struct {
 	SineFrequency         float64
 	SineAmplitude         float64
 	SinePreview           bool
+	SinePreviewLive       bool
 }
 
 // ResultMetrics are the aggregated metrics after the load test

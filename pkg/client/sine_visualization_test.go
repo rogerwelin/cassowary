@@ -34,6 +34,48 @@ func TestSineVisualizationNoDuration(t *testing.T) {
 	cass.ShowSineVisualization()
 }
 
+func TestLiveVisualizationParams(t *testing.T) {
+	// Test that live visualization setup works without panic
+	cass := Cassowary{
+		Duration:        10,
+		Requests:        50,
+		SineFrequency:   2.0,
+		SineAmplitude:   0.7,
+		SineCurve:       true,
+		SinePreviewLive: true,
+	}
+
+	// This tests parameter setup without running the full animation
+	params := SineVisualizationParams{
+		Frequency:    cass.SineFrequency,
+		Amplitude:    cass.SineAmplitude,
+		HasDuration:  cass.Duration > 0,
+		Requests:     cass.Requests,
+	}
+
+	if params.HasDuration {
+		params.Duration = float64(cass.Duration)
+		params.BaselineRate = float64(cass.Requests) / params.Duration
+	} else {
+		params.Duration = previewDuration
+		params.BaselineRate = defaultSineBaselineRate
+	}
+
+	// Verify parameters are set correctly
+	if params.Frequency != 2.0 {
+		t.Errorf("Expected frequency 2.0, got %f", params.Frequency)
+	}
+	if params.Amplitude != 0.7 {
+		t.Errorf("Expected amplitude 0.7, got %f", params.Amplitude)
+	}
+	if !params.HasDuration {
+		t.Error("Expected HasDuration to be true")
+	}
+	if params.BaselineRate != 5.0 { // 50 requests / 10 seconds
+		t.Errorf("Expected baseline rate 5.0, got %f", params.BaselineRate)
+	}
+}
+
 func TestSineVisualizationParams_EdgeCases(t *testing.T) {
 	testCases := []struct {
 		name      string

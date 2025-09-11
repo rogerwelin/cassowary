@@ -269,144 +269,41 @@ Starting Load Test with 100 requests using 1 concurrent users
 ```
 
 ### Sine Curve Load Testing  
-**Cassowary** supports variable load patterns using a sine curve mode, which varies the request rate over time following a mathematical sine wave. This is useful for testing how your system handles realistic traffic patterns with peaks and valleys, rather than constant load.
+**Cassowary** supports variable load patterns using sine curve mode, which varies the request rate over time following a mathematical sine wave. This simulates realistic traffic patterns with natural peaks and valleys.
 
-#### Why Use Sine Curve Load Testing?
-- **Realistic Traffic Simulation**: Real-world traffic often varies over time with natural peaks and valleys
-- **Stress Testing**: Test how your system handles gradual load increases and decreases  
-- **Performance Profiling**: Identify performance bottlenecks during different load phases
-- **Capacity Planning**: Understand system behavior under varying load conditions
+#### Quick Reference
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--sine-curve` | Enable sine wave pattern | false |
+| `--sine-frequency` | Cycles per test duration | 1.0 |
+| `--sine-amplitude` | Rate variation (0.0-1.0) | 0.5 |
+| `--sine-preview` | Show static ASCII preview (no requests sent) | false |
+| `--sine-preview-live` | Show live animated preview (no requests sent) | false |
 
 #### Basic Usage
-Enable sine curve mode with the `--sine-curve` flag. You can either specify a duration for a timed test, or omit the duration to let the sine wave pattern determine the timing:
-
-**With Duration (sends specified requests over specified time):**
 ```bash
+# Basic sine curve load test
 $ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve
 
-Starting Load Test with 1000 requests using 1 concurrent users
+# Preview the pattern first (no requests sent)
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preview
 
-[ omitted for brevity ]
+# Live animated preview (no requests sent) 
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-preview-live
 
+# Custom wave: 2 cycles, high variation
+$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve --sine-frequency 2.0 --sine-amplitude 0.8
 ```
 
-**Without Duration (sends specified requests following sine wave timing):**
-```bash
-$ ./cassowary run -u http://localhost:8000 -n 100 --sine-curve
+#### Wave Pattern Examples
+- **Gentle**: `--sine-amplitude 0.2` (rate varies ±20%)
+- **Normal**: `--sine-amplitude 0.5` (rate varies ±50%) 
+- **Dramatic**: `--sine-amplitude 0.8` (rate varies ±80%)
+- **Fast waves**: `--sine-frequency 2.0` (2 complete cycles)
+- **Slow waves**: `--sine-frequency 0.5` (half cycle)
 
-Starting Load Test with 100 requests using 1 concurrent users
-
-[ omitted for brevity ]
-
-```
-
-#### Advanced Configuration
-You can control the sine wave pattern with additional parameters:
-
-**Frequency** (`--sine-frequency`): Number of complete sine cycles during the test duration
-```bash
-# 2 complete sine cycles over 60 seconds
-$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve --sine-frequency 2.0
-```
-
-**Amplitude** (`--sine-amplitude`): Controls how dramatically the rate varies (0.0-1.0)
-```bash
-# Gentle variation: rate varies from 75% to 125% of baseline
-$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve --sine-amplitude 0.25
-
-# Dramatic variation: rate varies from 20% to 180% of baseline  
-$ ./cassowary run -u http://localhost:8000 -n 1000 -d 60 --sine-curve --sine-amplitude 0.8
-```
-
-#### Understanding the Pattern
-
-**With Duration Mode:**
-With default settings (`--sine-frequency 1.0 --sine-amplitude 0.5`):
-- **Baseline rate**: 1000 requests ÷ 60 seconds = ~16.7 req/s
-- **Rate varies from**: 8.3 req/s (50% of baseline) to 25 req/s (150% of baseline)
-- **Pattern**: Starts at baseline → peaks at 150% → drops to 50% → returns to baseline
-
-**Without Duration Mode:**
-With default settings (`--sine-frequency 1.0 --sine-amplitude 0.5`):
-- **Baseline rate**: 10 req/s (fixed baseline for sine wave oscillation)
-- **Rate varies from**: 5 req/s (50% of baseline) to 15 req/s (150% of baseline)
-- **Pattern**: Continuous sine wave with 1 complete cycle per minute until all requests are sent
-- **Completion**: Test finishes after sending all specified requests (`-n` flag)
-
-#### Visual Pattern Demonstration
-
-Here's how the sine curve pattern looks over time:
-
-```
-Request Rate Over Time (sine-frequency=1.0, sine-amplitude=0.5, baseline=10 req/s):
-
-Req/s
-  15 ┤                    ╭─╮                    ╭─╮
-     │                   ╱   ╲                  ╱   ╲
-  13 ┤                  ╱     ╲                ╱     ╲
-     │                 ╱       ╲              ╱       ╲
-  11 ┤                ╱         ╲            ╱         ╲
-     │               ╱           ╲          ╱           ╲
-  10 ┤──────────────╱─────────────╲────────╱─────────────╲──── Baseline
-     │             ╱               ╲      ╱               ╲
-   8 ┤            ╱                 ╲    ╱                 ╲
-     │           ╱                   ╲  ╱                   ╲
-   6 ┤          ╱                     ╲╱                     ╲
-     │         ╱                       ╲                      ╲
-   5 ┤        ╱                         ╲                      ╲
-     └────────┴─────────────────────────┴──────────────────────┴────
-     0s      15s      30s      45s      60s     75s      90s     120s
-
-• Peak Rate: 15 req/s (150% of baseline) • Valley Rate: 5 req/s (50% of baseline)
-• Cycle Duration: 60 seconds • Smooth transitions between high and low load
-```
-
-**Different Frequency Settings:**
-
-High Frequency (`--sine-frequency 2.0`) - 2 cycles per minute:
-```
-  15 ┤  ╭─╮    ╭─╮    ╭─╮    ╭─╮
-  10 ┤──╱─╲────╱─╲────╱─╲────╱─╲──── Baseline  
-   5 ┤ ╱   ╲  ╱   ╲  ╱   ╲  ╱   ╲
-     └─┴─────┴─┴─────┴─┴─────┴─┴─────
-     0s    15s    30s    45s    60s
-```
-
-High Amplitude (`--sine-amplitude 0.8`) - More dramatic variation:
-```
-  18 ┤                    ╭──╮
-  15 ┤                  ╭─╱    ╲─╮
-  10 ┤──────────────────╱────────╲──── Baseline
-   5 ┤                ╱          ╲
-   2 ┤               ╱            ╲
-     └───────────────┴─────────────┴────
-     0s             30s           60s
-     (Varies from 20% to 180% of baseline)
-```
-
-#### Try It Yourself - Live Demo
-
-Run these commands to see the difference between regular and sine curve load testing:
-
-**Regular Load Test (constant rate):**
-```bash
-$ time ./cassowary run -u https://httpbin.org/delay/0.1 -n 20 -c 1
-# Requests sent at constant intervals
-```
-
-**Sine Curve Load Test (variable rate):**
-```bash
-$ time ./cassowary run -u https://httpbin.org/delay/0.1 -n 20 -c 1 --sine-curve --sine-frequency 2.0 --sine-amplitude 0.8
-# Requests sent following sine wave pattern - notice the different total time!
-```
-
-**Gentle Sine Curve (subtle variation):**
-```bash
-$ time ./cassowary run -u https://httpbin.org/delay/0.1 -n 20 -c 1 --sine-curve --sine-frequency 0.5 --sine-amplitude 0.3
-# Gentle wave pattern with less dramatic rate changes
-```
-
-> **Tip:** Use `time` command to see how the total execution time varies based on the sine wave parameters!
+**📖 For detailed documentation, advanced examples, and mathematical explanations, see [SINE_CURVE.md](SINE_CURVE.md)**
 
 ### Adding HTTP Headers  
 Example adding an HTTP header when running **cassowary**

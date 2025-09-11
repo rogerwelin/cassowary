@@ -61,7 +61,15 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 }
 
 func runLoadTest(c *client.Cassowary) error {
-	// Handle sine curve preview mode
+	// Handle sine curve preview modes
+	if c.SinePreviewLive {
+		if !c.SineCurve {
+			// Automatically enable sine curve if live preview is requested
+			c.SineCurve = true
+		}
+		return c.ShowLiveSineVisualization()
+	}
+	
 	if c.SinePreview {
 		if !c.SineCurve {
 			// Automatically enable sine curve if preview is requested
@@ -262,6 +270,7 @@ func validateCLI(c *cli.Context) error {
 		SineFrequency:         c.Float64("sine-frequency"),
 		SineAmplitude:         c.Float64("sine-amplitude"),
 		SinePreview:           c.Bool("sine-preview"),
+		SinePreviewLive:       c.Bool("sine-preview-live"),
 	}
 
 	return runLoadTest(cass)
@@ -411,7 +420,11 @@ func runCLI(args []string) {
 				},
 				&cli.BoolFlag{
 					Name:  "sine-preview",
-					Usage: "show ASCII visualization of sine wave pattern without running test",
+					Usage: "show ASCII visualization of sine wave pattern (no HTTP requests sent)",
+				},
+				&cli.BoolFlag{
+					Name:  "sine-preview-live",
+					Usage: "show live animated ASCII visualization of sine wave pattern (no HTTP requests sent)",
 				},
 			},
 			Action: validateCLI,
