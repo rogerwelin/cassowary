@@ -406,7 +406,25 @@ func runCLI(args []string) {
 	app.Commands = []*cli.Command{
 		{
 			Name:  "run",
-			Usage: "start load-test",
+			Usage: "start load-test with constant or sine wave traffic patterns",
+			Description: `Start a load test with configurable request patterns:
+
+• Constant rate: Traditional load testing with steady request rate
+• Sine wave: Realistic traffic simulation with natural peaks and valleys
+• Use --sine-preset for quick start or --sine-preview to visualize first
+
+EXAMPLES:
+  # Traditional constant rate test
+  cassowary run -u https://example.com -n 1000 -d 60 -c 10
+
+  # Quick sine wave test (recommended for beginners)
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-preset normal
+  
+  # Preview sine wave pattern before running
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-preview
+  
+  # Custom sine wave with gentle variation
+  cassowary run -u https://example.com -n 1000 -d 60 --sine-curve --sine-frequency 0.5 --sine-amplitude 0.3`,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:     "u",
@@ -524,29 +542,29 @@ func runCLI(args []string) {
 				},
 				&cli.BoolFlag{
 					Name:  "sine-curve",
-					Usage: "enable sine curve request pattern (varies request rate over time)",
+					Usage: "Enable sine wave load pattern (realistic traffic simulation with peaks and valleys)",
 				},
 				&cli.StringFlag{
 					Name:  "sine-preset",
-					Usage: "use predefined sine wave settings: gentle, normal, aggressive",
+					Usage: "Quick start with preset patterns: 'gentle' (gradual +30%), 'normal' (±50%), 'aggressive' (±70%)",
 				},
 				&cli.Float64Flag{
 					Name:  "sine-frequency",
-					Usage: "number of sine wave cycles during the test duration",
+					Usage: "Wave cycles during test (0.5=half wave, 1.0=complete cycle, 2.0=fast oscillations)",
 					Value: 0.5,
 				},
 				&cli.Float64Flag{
 					Name:  "sine-amplitude",
-					Usage: "amplitude factor for sine wave (0.0-1.0, where 1.0 means rate varies from 0 to 2x baseline)",
+					Usage: "Traffic variation intensity (0.2=gentle ±20%, 0.5=moderate ±50%, 0.8=dramatic ±80%)",
 					Value: 0.5,
 				},
 				&cli.BoolFlag{
 					Name:  "sine-preview",
-					Usage: "show ASCII visualization of sine wave pattern (no HTTP requests sent)",
+					Usage: "Preview sine wave pattern with ASCII chart (safe - no actual requests sent)",
 				},
 				&cli.BoolFlag{
 					Name:  "sine-preview-live",
-					Usage: "show live animated ASCII visualization of sine wave pattern (no HTTP requests sent)",
+					Usage: "Watch live animated sine wave preview (safe - no actual requests sent)",
 				},
 			},
 			Action: validateCLI,
@@ -588,11 +606,13 @@ func setCustomCLITemplate(c *cli.App) {
 	{{.Copyright}}{{end}}
 
 	%s
-	Example running cassowary against a target with 100 requests using 10 concurrent users
-	  %s
+	Examples:
+	  Traditional: %s
+	  Sine wave:   %s
   `, whiteBold("NAME"),
 		whiteBold("COMMANDS"),
 		whiteBold("GLOBAL OPTIONS"),
-		whiteUnderline("Example"),
-		cyan("$ cassowary run -u http://www.example.com -c 10 -n 100"))
+		whiteUnderline("Examples"),
+		cyan("$ cassowary run -u http://www.example.com -c 10 -n 100"),
+		cyan("$ cassowary run -u http://www.example.com -n 1000 -d 60 --sine-preset normal"))
 }
