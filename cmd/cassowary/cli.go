@@ -61,6 +61,16 @@ func outPutJSON(fileName string, metrics client.ResultMetrics) error {
 }
 
 func runLoadTest(c *client.Cassowary) error {
+	// Handle sine curve preview mode
+	if c.SinePreview {
+		if !c.SineCurve {
+			// Automatically enable sine curve if preview is requested
+			c.SineCurve = true
+		}
+		c.ShowSineVisualization()
+		return nil
+	}
+
 	metrics, err := c.Coordinate()
 	if err != nil {
 		return err
@@ -251,6 +261,7 @@ func validateCLI(c *cli.Context) error {
 		SineCurve:             c.Bool("sine-curve"),
 		SineFrequency:         c.Float64("sine-frequency"),
 		SineAmplitude:         c.Float64("sine-amplitude"),
+		SinePreview:           c.Bool("sine-preview"),
 	}
 
 	return runLoadTest(cass)
@@ -397,6 +408,10 @@ func runCLI(args []string) {
 					Name:  "sine-amplitude",
 					Usage: "amplitude factor for sine wave (0.0-1.0, where 1.0 means rate varies from 0 to 2x baseline)",
 					Value: 0.5,
+				},
+				&cli.BoolFlag{
+					Name:  "sine-preview",
+					Usage: "show ASCII visualization of sine wave pattern without running test",
 				},
 			},
 			Action: validateCLI,
